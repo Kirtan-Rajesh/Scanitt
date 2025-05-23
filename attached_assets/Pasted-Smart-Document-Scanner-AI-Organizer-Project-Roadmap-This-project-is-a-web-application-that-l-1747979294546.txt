@@ -1,0 +1,365 @@
+Smart Document Scanner & AI Organizer – Project
+ Roadmap
+ This project is a web application that lets users upload any document image (receipts, invoices, ID cards,
+ notes, etc.), automatically detects the document region, applies perspective correction and image
+ enhancements (using OpenCV), extracts text via OCR, and then uses an AI agent to analyze the content and
+ categorize it into folders or tags. This fully-Python-based solution pairs a modern web stack (e.g. FastAPI
+ backend and React/TypeScript frontend ) with computer vision and NLP. For example, a “full-stack
+ FastAPI” template recommends FastAPI (Python) with SQLModel/PostgreSQL and a React+Vite frontend .
+ The document processing pipeline will use OpenCV’s 
+1
+ 3
+ 1
+ getPerspectiveTransform 
+2
+ and
+ warpPerspective to deskew documents , plus adaptive thresholding/contrast fixes for a clean
+ “scanned” look . OCR (Tesseract or a cloud API) converts the corrected image to text, and finally an LLM
+based agent (via LangChain or similar) classifies the content into categories (bills, notes, IDs, etc.) by its
+ textual content .
+ 4
+ 5
+ Suggested Technology Stack
+ • 
+• 
+• 
+• 
+Frontend: React (with TypeScript and a build tool like Vite), using a component library (e.g. Chakra
+ UI) for rapid UI development
+ 1
+ . React is well-suited for dynamic file-upload interfaces and tag
+ management. 
+Backend: Python with FastAPI for the web API. FastAPI is high-performance and supports async
+ operations, Pydantic models, and automatic docs. (Alternatively, Flask or Django REST could be used,
+ but FastAPI has built-in async and data validation .) 
+Database: PostgreSQL (or SQLite for a lightweight prototype), accessed via an ORM (SQLModel or
+ SQLAlchemy) as in the FastAPI template
+ 1
+ 1
+ . This stores user data, document metadata (filenames,
+ categories, tags), and OCR text. 
+Document Processing: OpenCV (Python) for computer vision tasks. Use OpenCV to detect edges/
+ contours of the document in the photo, compute a 4-point perspective transform, and apply 
+cv2.warpPerspective to straighten it
+ 2
+ . Then apply grayscale conversion and adaptive
+ thresholding/contrast (e.g. 
+• 
+• 
+• 
+3
+ cv2.adaptiveThreshold ) to enhance readability like a real scan . 
+OCR: Tesseract OCR (via pytesseract) or a cloud OCR API (Google Vision, AWS Textract) to extract text
+ from the processed image. The text is passed to the AI module. 
+AI Agent / NLP: A language model (LLM) to interpret the extracted text and decide categories/tags.
+ We can use a framework like LangChain or LangGraph to orchestrate prompts to the LLM.
+ LangChain’s LangGraph supports building stateful AI workflows and agentic reasoning . For
+ example, we might prompt the LLM to “Given this receipt text, classify it as invoice, receipt, ID, or
+ note, and extract key fields.” 
+LLM/API Choices: For NLP sorting, cloud APIs like OpenAI (GPT-4, GPT-4o) or Cohere can be used.
+ Alternatively, open-source LLMs (Hugging Face models) enable local inference: e.g. Meta’s LLaMA (v3
+ or v4, released 2025) or Mistral-7B. In practice, a local model like Mistral-7B has been used
+ successfully for receipt parsing to keep data on-device . 
+6
+ 5
+ 7
+ 1
+• 
+Infrastructure: Docker Compose for local development and deployment. Optionally use Traefik or
+ Nginx as a reverse proxy for HTTPS and scaling. Continuous integration (GitHub Actions) and
+ deployment scripts should be included (the FastAPI template includes these out of the box ). 
+8
+ System Components
+ • 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+Frontend App (Developer 1): A React app for the user interface. It provides: 
+File Upload UI: Allow users to upload images or capture via camera. Show upload progress. 
+Document Viewer: After processing, display the corrected/scanned image and extracted text
+ preview. 
+Category/Tag Browser: Let users browse or search their processed documents by folder or tag.
+ Show folders like “Invoices”, “Receipts”, etc. 
+Settings & Export: Options to name files, download scans (as image/PDF), or tag documents
+ manually. 
+2
+ 3
+ Optional UI features: Login/Logout screens, profile page. 
+Backend API (Developer 2): A FastAPI service with endpoints: 
+Upload Endpoint: Accepts an image, saves it, and triggers processing. 
+Processing Endpoint: Runs the OpenCV pipeline on the image (edge detection, warp, enhancement)
+ . 
+OCR Endpoint: Calls Tesseract (or OCR API) to get text from the image. 
+AI Sorting Endpoint: Sends text to the LLM agent/chain (e.g. LangChain) to classify and return tags/
+ categories. For example, the agent might run a chain: extract key entities (dates, amounts) and then
+ pick a category. 
+Data Endpoints: CRUD APIs to store/retrieve document metadata, tags, and user info from the
+ database. 
+Document Processing Module (Developer 2): Python code (could be part of the backend) for the CV
+ pipeline: 
+Edge Detection: Use OpenCV (Canny or contour finding) to detect the largest quadrilateral (the
+ document) in the photo. 
+6
+ 7
+ 2
+ 3
+ Perspective Correction: Compute perspective transform (cv2.getPerspectiveTransform +
+ warpPerspective) to “flat-scan” the document . 
+Image Enhancement: Convert to grayscale and apply adaptive thresholding or contrast adjustment
+ to mimic a scanned page . 
+OCR Module (Developer 2): Integrate Tesseract (pytesseract) to convert the enhanced image into
+ raw text. This may also include pre/post-processing (denoising, splitting text by lines). 
+AI Sorting Module (Developers 1 & 2 collaboration):
+ Use LangChain/LangGraph to build a prompt chain or agent that takes OCR text and returns a
+ category/tag. LangGraph allows constructing multi-step agents (e.g. parse JSON, call tools, include
+ human-in-loop) . 
+Example approach: define categories (“receipt”, “invoice”, “id card”, “note”), provide examples in the
+ prompt, and ask the LLM to label the text. The LLM’s answer can then be parsed into a tag. 
+One can also use an embeddings+retrieval approach: embed the text (OpenAI or Cohere
+ embeddings) and use a vector DB (e.g. Pinecone or FAISS) with labeled examples to do classification. 
+Storage & Database (Developer 2):
+ File Storage: Store the original and processed images. This can be local disk (for prototype) or a
+ cloud bucket (AWS S3 or GCS) for scale. 
+2
+• 
+• 
+• 
+• 
+Database: Store metadata in PostgreSQL or SQLite: user info, file records (filename, upload date,
+ tags), OCR text, etc. Use an ORM (SQLModel) for schema and migrations. 
+Authentication (Optional, Dev 1/2):
+ 9
+ 9
+ Implement user accounts so multiple users can have separate document libraries. Use JWT tokens
+ for API auth (FastAPI provides easy JWT integration ). 
+Provide secure password storage (FastAPI template includes hashed passwords and JWT out of the
+ box ). 
+Team Roles & Responsibilities
+ • 
+• 
+• 
+• 
+Developer 1 (Frontend & Integration):
+ Build the React frontend: pages for upload, document gallery, and settings. Use React Router or
+ Next.js for navigation. 
+Implement the file-upload component (HTML 
+<input type="file"> or camera capture). Handle
+ f
+ ile previews and upload progress. 
+Consume backend APIs: send images to backend, display returned scanned image and tags. Show
+ categorized folders or tag lists. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+(Optional) Implement user authentication in the UI: login/signup forms, handle JWT tokens for API
+ calls. 
+Style the UI (e.g. with Chakra UI or Material-UI) for a clean, modern look. 
+Develop any mobile-responsive design for users scanning from phones. 
+Developer 2 (Backend & Processing):
+ Set up the FastAPI server with necessary routes and middleware. Create Pydantic models for
+ request/response schemas. 
+Implement the document processing pipeline in Python: edge detection and perspective transform
+ using OpenCV (cv2)
+ 2
+ 3
+ , and image enhancement (thresholding, filtering) . 
+Integrate OCR (pytesseract) and handle any text cleaning. 
+Integrate the AI sorting: set up LangChain/LangGraph code, write prompts or agent code for
+ classification. Experiment with LLM providers (OpenAI API or local HF model) to get reliable category
+ labels. 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+• 
+Design the database schema (documents table, tags table, user table, etc.) and implement data
+ storage logic. 
+Ensure endpoints handle errors (bad images, missing fields) gracefully. 
+(Optional) Implement authentication logic in FastAPI (JWT issuing, password reset) as guided by the
+ FastAPI template . 
+9
+ Shared/DevOps (Both):
+ Set up the project repository with clear folder structure and README. 
+Write unit and integration tests (FastAPI + React). FastAPI template suggests using Pytest . 
+Configure Docker Compose: one service for the backend, one for the frontend, and one for the
+ database. Ensure easy startup and environment config. 
+Set up a CI/CD workflow (GitHub Actions) for testing and deployment. 
+Collaborate on API design: agree on request/response formats and data models. 
+Project Folder Structure
+ A suggested modular layout might be:
+ 10
+ 3
+smart-scanner-app/
+ │
+ ├─ backend/                   # Python FastAPI server
+ │   ├─ app.py                 # main FastAPI app
+ │   ├─ requirements.txt       # Python dependencies (fastapi, uvicorn, opencv, 
+pytesseract, langchain, etc.)
+ │   ├─ processing.py         # document scan logic (OpenCV functions)
+ │   ├─ ocr.py                # OCR utility functions
+ │   ├─ ai_agent.py           # LangChain agent or classification functions
+ │   ├─ models.py             # SQLModel/SQLAlchemy models (Document, User, etc.)
+ │   ├─ database.py           # DB connection and session
+ │   ├─ auth.py               # JWT auth handlers (login, signup)
+ │   └─ ...                   # any other modules (utils, config, etc.)
+ │
+ ├─ frontend/                  # React (TypeScript) application
+ │   ├─ public/
+ │   ├─ src/
+ │   │   ├─ App.tsx           # main React component
+ │   │   ├─ components/       # UI components (Uploader, DocViewer, etc.)
+ │   │   ├─ services/         # API client (axios/fetch wrappers)
+ │   │   ├─ hooks/            # custom React hooks
+ │   │   ├─ pages/            # page components (Gallery, Login, Settings)
+ │   │   ├─ App.css           # styling
+ │   │   └─ index.tsx         # entry point
+ │   ├─ package.json
+ │   └─ ...                   # other config (vite.config.js, tailwind.config.js 
+if used, etc.)
+ │
+ ├─ storage/                   # (Optional) local directory or scripts for cloud 
+storage
+ │
+ ├─ docs/                      # Project documentation (design, user guide)
+ │
+ ├─ .dockerignore
+ ├─ docker-compose.yml
+ ├─ README.md
+ └─ .gitignore
+ This structure cleanly separates the front-end and back-end codebases. Each module is focused: e.g.
+ processing.py contains only CV code, 
+ai_agent.py contains the LLM logic. The 
+models.py and
+ database.py hold all data modeling (as in the FastAPI template ). The frontend has logical React
+ component folders. Docker files at the root tie everything together.
+ 1
+ 4
+AI Models & NLP Services
+ For classifying document content and sorting:
+ • 
+• 
+• 
+Cloud LLM APIs: OpenAI’s GPT-4/GPT-4o or Cohere’s API can be used via LangChain prompts to
+ classify text. These models excel at understanding context (e.g. “This text reads like a bill from a
+ utility company”).
+ Open-Source LLMs: If data privacy or cost is a concern, use local models. For example, Meta’s
+ LLaMA-4 (April 2025) is an open high-performance model
+ has been demonstrated for receipt parsing
+ 5
+ 11
+ . A smaller 7B model like Mistral-7B
+ . LangChain can interface with these via Hugging Face
+ or a local server.
+ Embeddings & Classification: Alternatively, use vector embeddings (OpenAI, Cohere, or open
+source embeddings like SBERT) and a simple nearest-neighbor against a small labeled dataset. Then
+ use a threshold or a simple classifier on the embedding space.
+ • 
+• 
+LangChain / LangGraph: Use LangChain’s agent tools for complex workflows. LangGraph (part of
+ LangChain) helps build multi-step, stateful agents with human-in-the-loop if needed . For
+ example, an agent might extract key fields (date, amount) and then decide the folder. LangGraph’s
+ streaming and execution control features make it robust for production.
+ Prompt Engineering: Craft prompts carefully. An example prompt: “Below is the text extracted from a
+ document image. Identify its type: Receipt, Invoice, ID Card, or Note. Provide a JSON with 
+6
+ 7
+ { "type": 
+<category>, "tags": [<keywords>] } .” LangChain can enforce JSON output (via models that
+ support structured output).
+ Optional Extensions
+ • 
+• 
+User Accounts & Authentication: Allow users to sign up and log in. FastAPI’s full-stack template
+ already includes JWT auth and password reset flow . This extension ensures each user’s
+ documents are private.
+ 9
+ Full-Text Search: Implement searching across all OCR text. This could use a simple SQL full-text
+ index, or an external engine (Elasticsearch). Alternatively, use a vector search: embed each doc’s text
+ and index in Pinecone/Weaviate for semantic search.
+ • 
+• 
+• 
+• 
+• 
+Advanced Tagging: Let users add/edit tags or correct AI-suggested categories. Build a feedback
+ loop: if a user recategorizes a document, store that correction to refine the model.
+ Export & Sharing: Allow exporting documents as PDF (pack multiple pages) or CSV of extracted
+ data. Offer integration to email or cloud drives (Dropbox/Google Drive).
+ Notifications/Alerts: (Long-term) Notify users of documents, e.g. “You have 5 unread bills from last
+ month.” This could use scheduled jobs.
+ Mobile-Friendly Design: Since scanning often involves a phone camera, ensure the frontend works
+ well on mobile screens. Perhaps even add a mobile app or a PWA for offline scanning.
+ Audit Trail & Logs: For a production demo, add logging and monitoring (errors from OCR/AI) and an
+ admin panel to view system metrics.
+ This roadmap lays out a clear, modular plan. It uses proven technologies (FastAPI, React, OpenCV) and
+ modern AI frameworks (LangChain, GPT) to create a production-ready scanning + sorting app. Each
+ component is assigned to ensure two developers have balanced, clearly defined tasks. The resulting project– documented and well-structured – can be showcased as an end-to-end Python/AI web application in a
+ resume or portfolio. 
+5
+1
+ 2
+ 4
+ 5
+ Sources: We base our architecture on modern full-stack best practices (FastAPI + React ) and established
+ document-processing techniques (perspective transform , image thresholding , LLM-powered
+ classification ). LangChain and LangGraph enable sophisticated agent workflows . All cited
+ references inform these choices to ensure a robust, cutting-edge solution. 
+3
+ 6
+ 7
+ 1
+ 8
+ 9
+ 10
+ Full Stack FastAPI Template - FastAPI
+ https://fastapi.tiangolo.com/project-generation/
+ 2
+ Perspective Transformation – Python OpenCV | GeeksforGeeks
+ https://www.geeksforgeeks.org/perspective-transformation-python-opencv/
+ 3
+ Enhance a Document Scan using Python and OpenCV | by Johannes Schuck | Analytics Vidhya | Medium
+ https://medium.com/analytics-vidhya/enhance-a-document-scan-using-python-and-opencv-9934a0c2da3d
+ 4
+ Document classification with machine learning
+ https://www.altexsoft.com/blog/document-classification/
+ 5
+ How to use AI to organize paperwork
+ https://www.linkedin.com/pulse/how-use-ai-organize-paperwork-simon-hefti-zo6yc
+ 6
+ LangGraph
+ https://www.langchain.com/langgraph
+ 7
+ Agents
+ https://www.langchain.com/agents
+ 11
+ Llama (language model) - Wikipedia
+ https://en.wikipedia.org/wiki/Llama_(language_model)
+ 6
