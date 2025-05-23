@@ -1,0 +1,32 @@
+[
+  {
+    "id": "6c0c1f5e-d050-4a6e-9c3d-3061664ce9d1",
+    "original_filename": "sample doc.jpg",
+    "filename": "6c0c1f5e-d050-4a6e-9c3d-3061664ce9d1_sample_doc.jpg",
+    "processed_filename": "processed_6c0c1f5e-d050-4a6e-9c3d-3061664ce9d1_sample_doc.jpg",
+    "original_path": "/static/uploads/6c0c1f5e-d050-4a6e-9c3d-3061664ce9d1_sample_doc.jpg",
+    "processed_path": "/static/processed/processed_6c0c1f5e-d050-4a6e-9c3d-3061664ce9d1_sample_doc.jpg",
+    "text": "i\n\nra\n\nV 4-' A)ivr.af;l\u2018 A\ne\nS ,g{g,y{ \u2018\ufb01f\u2018_ 3\nt L el\nSN et\n) J\u2018n ;4'., e 2\nN\n\no",
+    "category": "Uncategorized",
+    "tags": [
+      "document"
+    ],
+    "summary": "Error during document analysis",
+    "date_uploaded": "2025-05-23T06:03:11.499694"
+  },
+  {
+    "id": "3dae2ac8-674e-4fef-8472-b9819d4fc1b3",
+    "original_filename": "sample doc.jpg",
+    "filename": "3dae2ac8-674e-4fef-8472-b9819d4fc1b3_sample_doc.jpg",
+    "processed_filename": "processed_3dae2ac8-674e-4fef-8472-b9819d4fc1b3_sample_doc.jpg",
+    "original_path": "/static/uploads/3dae2ac8-674e-4fef-8472-b9819d4fc1b3_sample_doc.jpg",
+    "processed_path": "/static/processed/processed_3dae2ac8-674e-4fef-8472-b9819d4fc1b3_sample_doc.jpg",
+    "text": "i\n\nra\n\nV 4-' A)ivr.af;l\u2018 A\ne\nS ,g{g,y{ \u2018\ufb01f\u2018_ 3\nt L el\nSN et\n) J\u2018n ;4'., e 2\nN\n\no",
+    "category": "Uncategorized",
+    "tags": [
+      "document"
+    ],
+    "summary": "Error during document analysis",
+    "date_uploaded": "2025-05-23T06:03:39.566404"
+  }
+]
