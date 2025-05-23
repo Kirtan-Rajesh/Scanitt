@@ -21,7 +21,14 @@ def detect_and_transform(image_path):
         # Read the image
         image = cv2.imread(image_path)
         if image is None:
-            raise ValueError(f"Could not read image at {image_path}")
+            logger.error(f"Could not read image at {image_path}")
+            return Image.open(image_path)
+        
+        # Keep a copy of the original image
+        original = image.copy()
+        
+        # Get image dimensions
+        height, width = image.shape[:2]
         
         # Convert to grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -35,27 +42,55 @@ def detect_and_transform(image_path):
         # Find contours
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
-        # Find the largest contour (assuming it's the document)
+        # If no contours found, try other methods
+        if not contours:
+            # Try with adaptive thresholding
+            thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                           cv2.THRESH_BINARY_INV, 11, 2)
+            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # If still no contours found, return original image
         if not contours:
             logger.warning("No contours found in the image. Using original image.")
-            return Image.open(image_path)
+            result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
+            return Image.fromarray(result_image)
         
+        # Find the largest contour by area
         largest_contour = max(contours, key=cv2.contourArea)
         
         # Approximate the contour to get a polygon
-        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+        peri = cv2.arcLength(largest_contour, True)
+        approx = cv2.approxPolyDP(largest_contour, 0.02 * peri, True)
         
         # If we don't get a quadrilateral, try to find the best 4 points
         if len(approx) != 4:
-            logger.warning(f"Document corners not clearly detected (found {len(approx)} points). Trying to find best 4 corners.")
-            # Use a rectangle if approximation didn't work well
-            rect = cv2.minAreaRect(largest_contour)
-            box = cv2.boxPoints(rect)
-            approx = np.int0(box)
+            # Try with different epsilon values
+            for epsilon_factor in [0.01, 0.03, 0.05]:
+                approx = cv2.approxPolyDP(largest_contour, epsilon_factor * peri, True)
+                if len(approx) == 4:
+                    break
+            
+            # If still not 4 points, use a rectangle
+            if len(approx) != 4:
+                logger.warning(f"Document corners not clearly detected (found {len(approx)} points). Using bounding rectangle.")
+                rect = cv2.minAreaRect(largest_contour)
+                approx = cv2.boxPoints(rect)
+                approx = np.int0(approx)
         
-        # Ensure points are in the correct order (top-left, top-right, bottom-right, bottom-left)
-        approx = order_points(approx)
+        # Make sure points are in the right order (top-left, top-right, bottom-right, bottom-left)
+        approx = np.array(approx, dtype=np.float32)
+        if len(approx) == 4:
+            # Sum of x+y coordinates - smallest is top-left, largest is bottom-right
+            s = approx.sum(axis=1)
+            rect = np.zeros((4, 2), dtype=np.float32)
+            rect[0] = approx[np.argmin(s)]  # top-left
+            rect[2] = approx[np.argmax(s)]  # bottom-right
+            
+            # Difference of y-x coordinates - smallest is top-right, largest is bottom-left
+            diff = np.diff(approx, axis=1)
+            rect[1] = approx[np.argmin(diff)]  # top-right
+            rect[3] = approx[np.argmax(diff)]  # bottom-left
+            approx = rect
         
         # Get width and height of the document
         width_top = np.sqrt(((approx[1][0] - approx[0][0]) ** 2) + ((approx[1][1] - approx[0][1]) ** 2))
@@ -78,58 +113,27 @@ def detect_and_transform(image_path):
             [0, height - 1]
         ], dtype="float32")
         
-        # Convert the approximated quadrilateral to the right format
-        src_points = np.array([
-            approx[0].flatten(),
-            approx[1].flatten(),
-            approx[2].flatten(),
-            approx[3].flatten()
-        ], dtype="float32")
+        # Source points are the approx corners
+        src_points = approx
         
         # Compute the perspective transform matrix
         M = cv2.getPerspectiveTransform(src_points, dst_points)
         
         # Apply the transformation
-        warped = cv2.warpPerspective(image, M, (width, height))
+        warped = cv2.warpPerspective(original, M, (width, height))
         
         # Convert back to PIL Image
-        warped_pil = Image.fromarray(cv2.cvtColor(warped, cv2.COLOR_BGR2RGB))
-        
-        return warped_pil
+        result_image = cv2.cvtColor(warped, cv2.COLOR_BGR2RGB)
+        return Image.fromarray(result_image)
         
     except Exception as e:
         logger.error(f"Error in document detection: {e}")
         # Return the original image if processing fails
-        return Image.open(image_path)
-
-def order_points(pts):
-    """
-    Order points in: top-left, top-right, bottom-right, bottom-left order
-    
-    Args:
-        pts: The points to be ordered
-        
-    Returns:
-        Ordered points
-    """
-    # Convert to the right format if needed
-    if isinstance(pts, np.ndarray) and pts.shape[1] == 1 and pts.shape[2] == 2:
-        pts = pts.reshape(pts.shape[0], 2)
-    
-    # Initialize result
-    rect = np.zeros((4, 2), dtype="float32")
-    
-    # Sum of (x+y) is smallest at top-left, largest at bottom-right
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-    
-    # Difference (y-x) is smallest at top-right, largest at bottom-left
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-    
-    return rect
+        try:
+            result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
+            return Image.fromarray(result_image)
+        except:
+            return Image.open(image_path)
 
 def enhance_image(image):
     """
@@ -154,21 +158,20 @@ def enhance_image(image):
         enhancer = ImageEnhance.Sharpness(image)
         image = enhancer.enhance(1.3)
         
-        # Increase brightness slightly
-        enhancer = ImageEnhance.Brightness(image)
-        image = enhancer.enhance(1.1)
-        
-        # Apply adaptive thresholding using OpenCV
+        # Convert to numpy array for OpenCV processing
         img_array = np.array(image)
-        blurred = cv2.GaussianBlur(img_array, (5, 5), 0)
+        
+        # Apply bilateral filter to reduce noise while preserving edges
+        bilateral = cv2.bilateralFilter(img_array, 9, 75, 75)
+        
+        # Apply adaptive thresholding for the "scanned" look
         thresh = cv2.adaptiveThreshold(
-            blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            bilateral, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY, 11, 2
         )
         
         # Convert back to PIL Image
-        processed_image = Image.fromarray(thresh)
-        
-        return processed_image
+        return Image.fromarray(thresh)
         
     except Exception as e:
         logger.error(f"Error in image enhancement: {e}")
