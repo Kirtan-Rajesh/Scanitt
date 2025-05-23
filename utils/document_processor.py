@@ -75,7 +75,7 @@ def detect_and_transform(image_path):
                 logger.warning(f"Document corners not clearly detected (found {len(approx)} points). Using bounding rectangle.")
                 rect = cv2.minAreaRect(largest_contour)
                 approx = cv2.boxPoints(rect)
-                approx = np.int0(approx)
+                approx = np.array(approx, dtype=np.int32)
         
         # Make sure points are in the right order (top-left, top-right, bottom-right, bottom-left)
         approx = np.array(approx, dtype=np.float32)
@@ -130,8 +130,12 @@ def detect_and_transform(image_path):
         logger.error(f"Error in document detection: {e}")
         # Return the original image if processing fails
         try:
-            result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
-            return Image.fromarray(result_image)
+            # original is defined at the start of the try block, so it should be available here
+            if 'original' in locals():
+                result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
+                return Image.fromarray(result_image)
+            else:
+                return Image.open(image_path)
         except:
             return Image.open(image_path)
 

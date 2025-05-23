@@ -1,0 +1,332 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ document.original_filename }} - Scanitt{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ document.original_filename }}</li>
+                </ol>
+            </nav>
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-file-alt me-2"></i> {{ document.original_filename }}
+            </h1>
+        </div>
+        <div class="col-auto d-flex align-items-center">
+            <div class="btn-group">
+                <a href="/" class="btn btn-outline-primary">
+                    <i class="fas fa-plus-circle me-2"></i> New Scan
+                </a>
+                <button class="btn btn-outline-danger delete-document" data-document-id="{{ document.id }}">
+                    <i class="fas fa-trash-alt me-2"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button id="image-tab" class="nav-link active" data-bs-toggle="tab" data-bs-target="#image-view" 
+                                type="button" role="tab" aria-controls="image-view" aria-selected="true">
+                                <i class="fas fa-image me-2"></i> Document
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="text-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#text-view" 
+                                type="button" role="tab" aria-controls="text-view" aria-selected="false">
+                                <i class="fas fa-file-alt me-2"></i> Text
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div id="image-view" class="tab-pane fade show active" role="tabpanel" aria-labelledby="image-tab">
+                            <div id="document-viewer" class="document-viewer mb-3">
+                                <img id="document-image" src="{{ document.processed_path }}" alt="{{ document.original_filename }}" class="img-fluid">
+                            </div>
+                            <div class="document-controls">
+                                <button id="zoom-in" class="btn btn-sm btn-outline-primary" title="Zoom In">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button id="zoom-out" class="btn btn-sm btn-outline-primary" title="Zoom Out">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button id="rotate-left" class="btn btn-sm btn-outline-primary" title="Rotate Left">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                                <button id="rotate-right" class="btn btn-sm btn-outline-primary" title="Rotate Right">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                                <button id="reset-view" class="btn btn-sm btn-outline-primary" title="Reset View">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                                <button id="fullscreen" class="btn btn-sm btn-outline-primary" title="Fullscreen">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="text-view" class="tab-pane fade" role="tabpanel" aria-labelledby="text-tab">
+                            <pre id="document-text" class="document-text">{{ document.text }}</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group">
+                        <button id="export-pdf" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-pdf me-1"></i> Export PDF
+                        </button>
+                        <button id="export-image" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-image me-1"></i> Export Image
+                        </button>
+                        <button id="export-text" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-file-alt me-1"></i> Export Text
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Document Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Category</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge 
+                            {% if document.category == 'Receipt' %}bg-success
+                            {% elif document.category == 'Invoice' %}bg-info
+                            {% elif document.category == 'ID' %}bg-warning
+                            {% elif document.category == 'Medical' %}bg-danger
+                            {% elif document.category == 'Legal' %}bg-dark
+                            {% elif document.category == 'Note' %}bg-secondary
+                            {% else %}bg-primary{% endif %}">
+                                <i class="fas 
+                                {% if document.category == 'Receipt' %}fa-receipt
+                                {% elif document.category == 'Invoice' %}fa-file-invoice-dollar
+                                {% elif document.category == 'ID' %}fa-id-card
+                                {% elif document.category == 'Medical' %}fa-notes-medical
+                                {% elif document.category == 'Legal' %}fa-gavel
+                                {% elif document.category == 'Note' %}fa-sticky-note
+                                {% else %}fa-file-alt{% endif %} me-1"></i>
+                                {{ document.category }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Date Added</dt>
+                        <dd class="col-sm-8">{{ document.date_uploaded.split('T')[0] }}</dd>
+                        
+                        <dt class="col-sm-4">Tags</dt>
+                        <dd class="col-sm-8">
+                            {% for tag in document.tags %}
+                            <span class="badge bg-secondary me-1 mb-1">{{ tag }}</span>
+                            {% endfor %}
+                        </dd>
+                        
+                        <dt class="col-sm-4">Edit Category</dt>
+                        <dd class="col-sm-8">
+                            <select class="form-select form-select-sm category-select" data-document-id="{{ document.id }}">
+                                <option value="Receipt" {% if document.category == 'Receipt' %}selected{% endif %}>Receipt</option>
+                                <option value="Invoice" {% if document.category == 'Invoice' %}selected{% endif %}>Invoice</option>
+                                <option value="ID" {% if document.category == 'ID' %}selected{% endif %}>ID</option>
+                                <option value="Medical" {% if document.category == 'Medical' %}selected{% endif %}>Medical</option>
+                                <option value="Legal" {% if document.category == 'Legal' %}selected{% endif %}>Legal</option>
+                                <option value="Note" {% if document.category == 'Note' %}selected{% endif %}>Note</option>
+                                <option value="Uncategorized" {% if document.category == 'Uncategorized' %}selected{% endif %}>Uncategorized</option>
+                            </select>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ document.summary }}</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Image Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" id="enhance-button">
+                            <i class="fas fa-wand-magic-sparkles me-2"></i> Enhance Image
+                        </button>
+                        <button class="btn btn-outline-primary" id="crop-button">
+                            <i class="fas fa-crop-alt me-2"></i> Manual Crop
+                        </button>
+                        <button class="btn btn-outline-primary" id="filter-button">
+                            <i class="fas fa-filter me-2"></i> Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the document view controls
+        setupDocumentViewer();
+        
+        // Delete document handler
+        const deleteButtons = document.querySelectorAll('.delete-document');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                if (confirm('Are you sure you want to delete this document?')) {
+                    const documentId = this.getAttribute('data-document-id');
+                    
+                    fetch(`/api/delete/${documentId}`, {
+                        method: 'DELETE'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = '/dashboard';
+                        } else {
+                            showAlert(data.error || 'Error deleting document', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Delete error:', error);
+                        showAlert('Error deleting document', 'danger');
+                    });
+                }
+            });
+        });
+        
+        // Handle tab switching
+        document.getElementById('image-tab').addEventListener('click', function() {
+            toggleDocumentView('image');
+        });
+        
+        document.getElementById('text-tab').addEventListener('click', function() {
+            toggleDocumentView('text');
+        });
+        
+        // Handle category change
+        const categorySelect = document.querySelector('.category-select');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                const documentId = this.getAttribute('data-document-id');
+                const newCategory = this.value;
+                
+                fetch(`/api/update-category/${documentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ category: newCategory })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Category updated successfully', 'success');
+                    } else {
+                        showAlert(data.error || 'Error updating category', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Update error:', error);
+                    showAlert('Error updating category', 'danger');
+                });
+            });
+        }
+        
+        // Image export button
+        document.getElementById('export-image').addEventListener('click', function() {
+            const link = document.createElement('a');
+            link.href = document.getElementById('document-image').src;
+            link.download = 'scanitt-document.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+        
+        // Text export button
+        document.getElementById('export-text').addEventListener('click', function() {
+            const text = document.getElementById('document-text').textContent;
+            const blob = new Blob([text], {type: 'text/plain'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'scanitt-document.txt';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+    });
+    
+    function setupDocumentViewer() {
+        const imageElement = document.getElementById('document-image');
+        let currentZoom = 1;
+        let currentRotation = 0;
+        
+        // Zoom in button
+        document.getElementById('zoom-in').addEventListener('click', function() {
+            currentZoom += 0.1;
+            updateTransform();
+        });
+        
+        // Zoom out button
+        document.getElementById('zoom-out').addEventListener('click', function() {
+            currentZoom = Math.max(0.5, currentZoom - 0.1);
+            updateTransform();
+        });
+        
+        // Rotate left button
+        document.getElementById('rotate-left').addEventListener('click', function() {
+            currentRotation -= 90;
+            updateTransform();
+        });
+        
+        // Rotate right button
+        document.getElementById('rotate-right').addEventListener('click', function() {
+            currentRotation += 90;
+            updateTransform();
+        });
+        
+        // Reset view button
+        document.getElementById('reset-view').addEventListener('click', function() {
+            currentZoom = 1;
+            currentRotation = 0;
+            updateTransform();
+        });
+        
+        // Fullscreen button
+        document.getElementById('fullscreen').addEventListener('click', function() {
+            if (imageElement.requestFullscreen) {
+                imageElement.requestFullscreen();
+            } else if (imageElement.webkitRequestFullscreen) {
+                imageElement.webkitRequestFullscreen();
+            } else if (imageElement.msRequestFullscreen) {
+                imageElement.msRequestFullscreen();
+            }
+        });
+        
+        function updateTransform() {
+            imageElement.style.transform = `rotate(${currentRotation}deg) scale(${currentZoom})`;
+        }
+    }
+</script>
+{% endblock %}

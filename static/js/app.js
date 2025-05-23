@@ -96,20 +96,16 @@ function handleFileUpload(event) {
             progressBar.setAttribute('aria-valuenow', 100);
             statusText.textContent = 'Document processed successfully!';
             
-            // Show document info
-            showProcessedDocument(data.document);
+            // Show success message
+            showAlert('Document processed successfully!', 'success');
             
             // Reset form after successful upload
-            setTimeout(() => {
-                uploadForm.reset();
-                progressContainer.classList.add('d-none');
-                submitButton.disabled = false;
-                
-                // Redirect to dashboard after 2 seconds
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 2000);
-            }, 1500);
+            uploadForm.reset();
+            progressContainer.classList.add('d-none');
+            submitButton.disabled = false;
+            
+            // Redirect to dashboard immediately
+            window.location.href = '/dashboard';
         } else {
             showAlert(data.error || 'Error processing document', 'danger');
             progressContainer.classList.add('d-none');
