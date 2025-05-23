@@ -1,0 +1,347 @@
+{% extends 'layout.html' %}
+
+{% block title %}Dashboard - Scanitt{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fas fa-th-large me-2"></i> Document Dashboard
+            </h1>
+            <p class="lead">All your scanned documents, organized by category and easily searchable.</p>
+        </div>
+        <div class="col-auto d-flex align-items-center">
+            <a href="/" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i> New Scan
+            </a>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" id="search-documents" class="form-control" placeholder="Search documents...">
+            </div>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="view-grid">
+                    <i class="fas fa-th-large"></i> Grid
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="view-list">
+                    <i class="fas fa-list"></i> List
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Category Sidebar -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Categories</h5>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="category-list list-group list-group-flush">
+                        <li class="list-group-item">
+                            <a href="#all" class="active d-flex align-items-center">
+                                <i class="fas fa-folder me-2 category-icon"></i>
+                                All Documents
+                                <span class="badge bg-primary ms-auto">{{ documents|length }}</span>
+                            </a>
+                        </li>
+                        {% for category, docs in categories.items() %}
+                        <li class="list-group-item">
+                            <a href="#{{ category|replace(' ', '-')|lower }}" class="d-flex align-items-center">
+                                <i class="fas 
+                                {% if category == 'Receipt' %}fa-receipt
+                                {% elif category == 'Invoice' %}fa-file-invoice-dollar
+                                {% elif category == 'ID' %}fa-id-card
+                                {% elif category == 'Medical' %}fa-notes-medical
+                                {% elif category == 'Legal' %}fa-gavel
+                                {% elif category == 'Note' %}fa-sticky-note
+                                {% else %}fa-file-alt{% endif %} me-2 category-icon"></i>
+                                {{ category }}
+                                <span class="badge bg-secondary ms-auto">{{ docs|length }}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Filters</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
+                            <i class="fas fa-calendar-alt me-1"></i> Today
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
+                            <i class="fas fa-calendar-week me-1"></i> This Week
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
+                            <i class="fas fa-star me-1"></i> Favorites
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
+                            <i class="fas fa-star me-1"></i> Untagged
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Document Grid/List -->
+        <div class="col-md-9">
+            {% if documents %}
+                <div id="documents-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for document in documents %}
+                    <div class="col document-item" data-category="{{ document.category }}" id="document-{{ document.id }}">
+                        <div class="card document-card h-100">
+                            <div class="position-relative">
+                                <span class="document-category position-absolute top-0 end-0 m-2">
+                                    <span class="badge 
+                                        {% if document.category == 'Receipt' %}bg-success
+                                        {% elif document.category == 'Invoice' %}bg-info
+                                        {% elif document.category == 'ID' %}bg-warning
+                                        {% elif document.category == 'Medical' %}bg-danger
+                                        {% elif document.category == 'Legal' %}bg-dark
+                                        {% elif document.category == 'Note' %}bg-secondary
+                                        {% else %}bg-primary{% endif %}">
+                                        <i class="fas 
+                                        {% if document.category == 'Receipt' %}fa-receipt
+                                        {% elif document.category == 'Invoice' %}fa-file-invoice-dollar
+                                        {% elif document.category == 'ID' %}fa-id-card
+                                        {% elif document.category == 'Medical' %}fa-notes-medical
+                                        {% elif document.category == 'Legal' %}fa-gavel
+                                        {% elif document.category == 'Note' %}fa-sticky-note
+                                        {% else %}fa-file-alt{% endif %} me-1"></i>
+                                        {{ document.category }}
+                                    </span>
+                                </span>
+                                <img src="{{ document.processed_path }}" class="card-img-top" alt="{{ document.original_filename }}">
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title text-truncate">{{ document.original_filename }}</h5>
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="fas fa-calendar-alt me-1"></i> {{ document.date_uploaded.split('T')[0] }}
+                                </p>
+                                <p class="card-text small mb-3">{{ document.summary[:100] }}{% if document.summary|length > 100 %}...{% endif %}</p>
+                                <div class="mb-3">
+                                    {% for tag in document.tags %}
+                                    <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0">
+                                <div class="btn-group w-100">
+                                    <a href="/document/{{ document.id }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i> View
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-document-id="{{ document.id }}">
+                                        <i class="fas fa-tag me-1"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-document" data-document-id="{{ document.id }}">
+                                        <i class="fas fa-trash-alt me-1"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Empty state -->
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3>No Documents Yet</h3>
+                    <p class="text-muted mb-4">Start by scanning your first document.</p>
+                    <a href="/" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i> Scan New Document
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Category Edit Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoryModalLabel">Edit Document Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-category-form">
+                    <div class="mb-3">
+                        <label for="category-select" class="form-label">Category</label>
+                        <select class="form-select category-select" id="category-select">
+                            <option value="Receipt">Receipt</option>
+                            <option value="Invoice">Invoice</option>
+                            <option value="ID">ID</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Legal">Legal</option>
+                            <option value="Note">Note</option>
+                            <option value="Uncategorized">Uncategorized</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-category">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal category edit
+        const editModal = document.getElementById('editCategoryModal');
+        if (editModal) {
+            editModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const documentId = button.getAttribute('data-document-id');
+                const categorySelect = document.getElementById('category-select');
+                
+                // Store the document ID in the modal
+                editModal.setAttribute('data-document-id', documentId);
+                
+                // You would typically fetch the current category from the server here
+                // For now, we'll just reset the select
+                categorySelect.value = 'Uncategorized';
+            });
+            
+            // Save category button
+            const saveButton = document.getElementById('save-category');
+            if (saveButton) {
+                saveButton.addEventListener('click', function() {
+                    const documentId = editModal.getAttribute('data-document-id');
+                    const categorySelect = document.getElementById('category-select');
+                    const newCategory = categorySelect.value;
+                    
+                    // Call API to update category
+                    fetch(`/api/update-category/${documentId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ category: newCategory })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close modal
+                            const modal = bootstrap.Modal.getInstance(editModal);
+                            modal.hide();
+                            
+                            // Show success message
+                            showAlert('Category updated successfully', 'success');
+                            
+                            // Update UI
+                            // In a real app, you'd reload the page or update just the document
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            showAlert(data.error || 'Error updating category', 'danger');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Update error:', error);
+                        showAlert('Error updating category. Please try again.', 'danger');
+                    });
+                });
+            }
+        }
+        
+        // Search functionality
+        const searchInput = document.getElementById('search-documents');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const documents = document.querySelectorAll('.document-item');
+                
+                documents.forEach(doc => {
+                    const title = doc.querySelector('.card-title').textContent.toLowerCase();
+                    const category = doc.getAttribute('data-category').toLowerCase();
+                    const summary = doc.querySelector('.card-text:not(.text-muted)').textContent.toLowerCase();
+                    const tags = Array.from(doc.querySelectorAll('.badge')).map(tag => tag.textContent.toLowerCase());
+                    
+                    // Search in title, category, summary, and tags
+                    const isMatch = title.includes(query) || 
+                                  category.includes(query) || 
+                                  summary.includes(query) || 
+                                  tags.some(tag => tag.includes(query));
+                    
+                    doc.style.display = isMatch ? '' : 'none';
+                });
+            });
+        }
+        
+        // View toggle (grid/list)
+        const viewGrid = document.getElementById('view-grid');
+        const viewList = document.getElementById('view-list');
+        const documentsContainer = document.getElementById('documents-container');
+        
+        if (viewGrid && viewList && documentsContainer) {
+            viewGrid.addEventListener('click', function() {
+                documentsContainer.classList.remove('row-cols-1');
+                documentsContainer.classList.add('row-cols-md-2', 'row-cols-lg-3');
+                viewGrid.classList.add('active');
+                viewList.classList.remove('active');
+            });
+            
+            viewList.addEventListener('click', function() {
+                documentsContainer.classList.add('row-cols-1');
+                documentsContainer.classList.remove('row-cols-md-2', 'row-cols-lg-3');
+                viewList.classList.add('active');
+                viewGrid.classList.remove('active');
+            });
+        }
+        
+        // Category filtering
+        const categoryLinks = document.querySelectorAll('.category-list a');
+        categoryLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Update active state
+                categoryLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                const category = this.getAttribute('href').substring(1);
+                filterDocumentsByCategory(category);
+            });
+        });
+        
+        function filterDocumentsByCategory(category) {
+            const documents = document.querySelectorAll('.document-item');
+            
+            documents.forEach(doc => {
+                if (category === 'all') {
+                    doc.style.display = '';
+                } else {
+                    const docCategory = doc.getAttribute('data-category').toLowerCase().replace(' ', '-');
+                    doc.style.display = docCategory === category.toLowerCase() ? '' : 'none';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% endblock %}
