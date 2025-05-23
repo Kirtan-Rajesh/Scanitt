@@ -109,7 +109,7 @@
                 <!-- Image View -->
                 <div class="tab-pane fade show active" id="image-view" role="tabpanel" aria-labelledby="image-tab">
                     <div class="document-viewer">
-                        <img id="document-image" src="{{ url_for('static', filename=document.processed_path.replace('static/', '')) }}" alt="{{ document.original_filename }}" class="img-fluid">
+                        <img id="document-image" src="/static/{{ document.processed_path.replace('static/', '') }}" alt="{{ document.original_filename }}" class="img-fluid">
                     </div>
                     
                     <div class="document-controls d-flex flex-wrap gap-2 mt-3">
