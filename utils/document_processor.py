@@ -30,24 +30,51 @@ def detect_and_transform(image_path):
         # Get image dimensions
         height, width = image.shape[:2]
         
+        # Resize large images for faster processing while maintaining aspect ratio
+        max_dimension = 1500
+        if max(height, width) > max_dimension:
+            scale_factor = max_dimension / max(height, width)
+            image = cv2.resize(image, None, fx=scale_factor, fy=scale_factor)
+            # Update dimensions
+            height, width = image.shape[:2]
+        
         # Convert to grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
         # Apply Gaussian blur to reduce noise
         blurred = cv2.GaussianBlur(gray, (5, 5), 0)
         
-        # Apply edge detection
-        edges = cv2.Canny(blurred, 75, 200)
+        # Enhance contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        enhanced = clahe.apply(blurred)
         
-        # Find contours
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Apply edge detection with improved parameters
+        edges = cv2.Canny(enhanced, 50, 150)
         
-        # If no contours found, try other methods
+        # Dilate edges to connect broken lines
+        kernel = np.ones((3, 3), np.uint8)
+        dilated_edges = cv2.dilate(edges, kernel, iterations=1)
+        
+        # Find contours on dilated edges
+        contours, _ = cv2.findContours(dilated_edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # If no contours found, try multiple methods
         if not contours:
-            # Try with adaptive thresholding
-            thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                           cv2.THRESH_BINARY_INV, 11, 2)
-            contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            methods = [
+                # Adaptive thresholding
+                lambda: cv2.adaptiveThreshold(enhanced, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                             cv2.THRESH_BINARY_INV, 11, 2),
+                # Otsu's thresholding
+                lambda: cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1],
+                # More aggressive Canny
+                lambda: cv2.Canny(enhanced, 30, 100)
+            ]
+            
+            for method in methods:
+                thresh = method()
+                contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                if contours:
+                    break
         
         # If still no contours found, return original image
         if not contours:
