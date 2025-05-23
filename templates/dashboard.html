@@ -1,161 +1,151 @@
 {% extends 'layout.html' %}
 
-{% block title %}Dashboard - Scanitt{% endblock %}
+{% block title %}Your Documents - Scanitt{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="h2 mb-0">My Documents</h1>
-        </div>
-        <div class="col-md-4 text-md-end">
-            <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
-                <i class="fas fa-upload me-1"></i> Upload New Document
-            </a>
-        </div>
-    </div>
-    
+<div class="container-fluid py-4">
     <div class="row">
-        <!-- Sidebar Filters -->
-        <div class="col-md-3 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Filter Documents</h5>
+        <div class="col-md-3 col-lg-2 d-none d-md-block">
+            <!-- Sidebar -->
+            <div class="card sticky-top mb-4" style="top: 1rem;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-folder me-2"></i> Categories</h5>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label for="search-input" class="form-label">Search</label>
-                        <input type="text" class="form-control" id="search-input" placeholder="Search documents...">
-                    </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('dashboard') }}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-th-large me-2"></i> All Documents
+                        <span class="badge bg-primary rounded-pill">{{ documents|length }}</span>
+                    </a>
+                    {% set categories = {} %}
+                    {% for doc in documents %}
+                        {% if doc.category and doc.category not in categories %}
+                            {% if categories.update({doc.category: 1}) %}{% endif %}
+                        {% elif doc.category %}
+                            {% if categories.update({doc.category: categories[doc.category] + 1}) %}{% endif %}
+                        {% endif %}
+                    {% endfor %}
                     
-                    <div class="mb-3">
-                        <label class="form-label">Categories</label>
-                        <div class="form-check">
-                            <input class="form-check-input category-filter" type="checkbox" value="all" id="all-categories" checked>
-                            <label class="form-check-label" for="all-categories">
-                                All Categories
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input category-filter" type="checkbox" value="Receipt" id="category-receipt">
-                            <label class="form-check-label" for="category-receipt">
-                                Receipts
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input category-filter" type="checkbox" value="Invoice" id="category-invoice">
-                            <label class="form-check-label" for="category-invoice">
-                                Invoices
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input category-filter" type="checkbox" value="ID" id="category-id">
-                            <label class="form-check-label" for="category-id">
-                                ID Documents
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input category-filter" type="checkbox" value="Other" id="category-other">
-                            <label class="form-check-label" for="category-other">
-                                Other
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Sort by</label>
-                        <select class="form-select" id="sort-select">
-                            <option value="date-desc">Date (Newest First)</option>
-                            <option value="date-asc">Date (Oldest First)</option>
-                            <option value="name-asc">Name (A-Z)</option>
-                            <option value="name-desc">Name (Z-A)</option>
-                        </select>
-                    </div>
+                    {% for category, count in categories.items() %}
+                    <a href="#" class="list-group-item list-group-item-action">
+                        {% if category == 'Receipt' %}
+                            <i class="fas fa-receipt me-2"></i>
+                        {% elif category == 'Invoice' %}
+                            <i class="fas fa-file-invoice-dollar me-2"></i>
+                        {% elif category == 'ID' %}
+                            <i class="fas fa-id-card me-2"></i>
+                        {% elif category == 'Medical' %}
+                            <i class="fas fa-notes-medical me-2"></i>
+                        {% elif category == 'Legal' %}
+                            <i class="fas fa-gavel me-2"></i>
+                        {% elif category == 'Note' %}
+                            <i class="fas fa-sticky-note me-2"></i>
+                        {% elif category == 'Document' %}
+                            <i class="fas fa-file-alt me-2"></i>
+                        {% else %}
+                            <i class="fas fa-file me-2"></i>
+                        {% endif %}
+                        {{ category }}
+                        <span class="badge bg-secondary rounded-pill">{{ count }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{{ url_for('upload_file') }}" class="btn btn-primary w-100">
+                        <i class="fas fa-upload me-2"></i> Upload New
+                    </a>
                 </div>
             </div>
         </div>
         
-        <!-- Document Grid/List -->
-        <div class="col-md-9">
-            {% if documents %}
-                <div id="documents-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                    {% for document in documents %}
-                    <div class="col document-item" data-category="{{ document.category }}" id="document-{{ document.id }}">
-                        <div class="card document-card h-100">
-                            <div class="position-relative">
-                                <span class="document-category position-absolute top-0 end-0 m-2">
-                                    <span class="badge 
-                                        {% if document.category == 'Receipt' %}bg-success
-                                        {% elif document.category == 'Invoice' %}bg-info
-                                        {% elif document.category == 'ID' %}bg-warning
-                                        {% elif document.category == 'Medical' %}bg-danger
-                                        {% elif document.category == 'Legal' %}bg-dark
-                                        {% elif document.category == 'Note' %}bg-secondary
-                                        {% else %}bg-primary{% endif %}">
-                                        <i class="fas 
-                                        {% if document.category == 'Receipt' %}fa-receipt
-                                        {% elif document.category == 'Invoice' %}fa-file-invoice-dollar
-                                        {% elif document.category == 'ID' %}fa-id-card
-                                        {% elif document.category == 'Medical' %}fa-notes-medical
-                                        {% elif document.category == 'Legal' %}fa-gavel
-                                        {% elif document.category == 'Note' %}fa-sticky-note
-                                        {% else %}fa-file-alt{% endif %} me-1"></i>
-                                        {{ document.category }}
-                                    </span>
-                                </span>
-                                <img src="/static/{{ document.processed_path.replace('static/', '') }}" class="card-img-top document-thumbnail" alt="{{ document.original_filename }}">
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title text-truncate">{{ document.original_filename }}</h5>
-                                <p class="card-text text-muted small">
-                                    Uploaded {{ document.date_uploaded.strftime('%b %d, %Y') }}
-                                </p>
-                            </div>
-                            <div class="card-footer bg-transparent d-flex justify-content-between">
-                                <a href="{{ url_for('view_document', document_id=document.id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye me-1"></i> View
-                                </a>
-                                <button type="button" class="btn btn-sm btn-outline-danger delete-document-btn" data-id="{{ document.id }}" data-name="{{ document.original_filename }}">
-                                    <i class="fas fa-trash-alt me-1"></i> Delete
-                                </button>
-                            </div>
-                        </div>
+        <div class="col-md-9 col-lg-10">
+            <!-- Content -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0">Your Documents</h1>
+                
+                <div class="d-flex">
+                    <div class="d-none d-md-block me-2">
+                        <input type="text" class="form-control" id="searchDocuments" placeholder="Search documents...">
                     </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="text-center py-5">
-                    <div class="mb-3">
-                        <i class="fas fa-file-upload fa-4x text-muted"></i>
-                    </div>
-                    <h3 class="h4 mb-3">No Documents Yet</h3>
-                    <p class="text-muted mb-4">Upload your first document to get started.</p>
-                    <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg">
-                        <i class="fas fa-upload me-1"></i> Upload Document
+                    <a href="{{ url_for('upload_file') }}" class="btn btn-primary d-md-none">
+                        <i class="fas fa-upload"></i>
                     </a>
                 </div>
+            </div>
+            
+            {% if documents %}
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+                {% for doc in documents %}
+                <div class="col">
+                    <div class="card h-100 document-card border-0 shadow-sm">
+                        <div class="position-relative">
+                            <img src="{{ url_for('static', filename=doc.processed_path.replace('static/', '')) }}" class="card-img-top" alt="{{ doc.original_filename }}">
+                            <div class="position-absolute top-0 end-0 p-2">
+                                <span class="badge {% if doc.category == 'Receipt' %}bg-success{% elif doc.category == 'Invoice' %}bg-warning{% elif doc.category == 'ID' %}bg-danger{% elif doc.category == 'Medical' %}bg-info{% elif doc.category == 'Legal' %}bg-dark{% else %}bg-secondary{% endif %}">
+                                    {{ doc.category }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate">{{ doc.original_filename }}</h5>
+                            <p class="card-text small text-muted mb-0">
+                                <i class="fas fa-calendar-alt me-1"></i> {{ doc.date_uploaded.strftime('%B %d, %Y') }}
+                            </p>
+                            <p class="card-text small mb-0">
+                                {% if doc.tags %}
+                                {% for tag in doc.tags[:2] %}
+                                <span class="badge bg-light text-dark me-1">{{ tag }}</span>
+                                {% endfor %}
+                                {% if doc.tags|length > 2 %}
+                                <span class="badge bg-light text-dark">+{{ doc.tags|length - 2 }}</span>
+                                {% endif %}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent d-flex justify-content-between">
+                            <a href="{{ url_for('view_document', document_id=doc.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i> View
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    onclick="confirmDelete('{{ doc.id }}', '{{ doc.original_filename }}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="py-4">
+                        <i class="fas fa-file-alt fa-5x text-muted mb-4"></i>
+                        <h3>No Documents Yet</h3>
+                        <p class="text-muted">Upload your first document to get started.</p>
+                        <a href="{{ url_for('upload_file') }}" class="btn btn-primary mt-2">
+                            <i class="fas fa-upload me-2"></i> Upload Document
+                        </a>
+                    </div>
+                </div>
+            </div>
             {% endif %}
         </div>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete <span id="document-name-placeholder"></span>?</p>
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i> This action cannot be undone.
-                </div>
+                Are you sure you want to delete <span id="documentName" class="fw-bold"></span>? This action cannot be undone.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" id="confirm-delete-btn" class="btn btn-danger">Delete</a>
+                <a href="#" id="deleteButton" class="btn btn-danger">Delete</a>
             </div>
         </div>
     </div>
@@ -164,124 +154,34 @@
 
 {% block scripts %}
 <script>
+    function confirmDelete(documentId, documentName) {
+        document.getElementById('documentName').textContent = documentName;
+        document.getElementById('deleteButton').href = "{{ url_for('delete_document', document_id='') }}" + documentId;
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+    
+    // Simple document search functionality
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle delete buttons
-        const deleteButtons = document.querySelectorAll('.delete-document-btn');
-        const documentNamePlaceholder = document.getElementById('document-name-placeholder');
-        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-        
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const documentId = this.getAttribute('data-id');
-                const documentName = this.getAttribute('data-name');
+        const searchInput = document.getElementById('searchDocuments');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const documentCards = document.querySelectorAll('.document-card');
                 
-                documentNamePlaceholder.textContent = documentName;
-                confirmDeleteBtn.href = `/delete/${documentId}`;
-                
-                deleteModal.show();
-            });
-        });
-        
-        // Filter functionality
-        const searchInput = document.getElementById('search-input');
-        const categoryFilters = document.querySelectorAll('.category-filter');
-        const allCategoriesCheckbox = document.getElementById('all-categories');
-        const sortSelect = document.getElementById('sort-select');
-        const documentItems = document.querySelectorAll('.document-item');
-        
-        // Handle "All Categories" checkbox
-        allCategoriesCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                categoryFilters.forEach(filter => {
-                    if (filter.id !== 'all-categories') {
-                        filter.checked = false;
-                        filter.disabled = true;
-                    }
-                });
-            } else {
-                categoryFilters.forEach(filter => {
-                    if (filter.id !== 'all-categories') {
-                        filter.disabled = false;
-                    }
-                });
-            }
-            
-            filterDocuments();
-        });
-        
-        // Handle category filter checkboxes
-        categoryFilters.forEach(filter => {
-            if (filter.id !== 'all-categories') {
-                filter.addEventListener('change', function() {
-                    // Uncheck "All Categories" if any specific category is checked
-                    if (this.checked && allCategoriesCheckbox.checked) {
-                        allCategoriesCheckbox.checked = false;
-                        categoryFilters.forEach(f => {
-                            if (f.id !== 'all-categories') {
-                                f.disabled = false;
-                            }
-                        });
-                    }
+                documentCards.forEach(card => {
+                    const title = card.querySelector('.card-title').textContent.toLowerCase();
+                    const category = card.querySelector('.badge').textContent.toLowerCase();
+                    const tags = Array.from(card.querySelectorAll('.badge.bg-light'))
+                                     .map(tag => tag.textContent.toLowerCase());
                     
-                    filterDocuments();
+                    if (title.includes(searchTerm) || 
+                        category.includes(searchTerm) || 
+                        tags.some(tag => tag.includes(searchTerm))) {
+                        card.closest('.col').style.display = '';
+                    } else {
+                        card.closest('.col').style.display = 'none';
+                    }
                 });
-            }
-        });
-        
-        // Handle search input
-        searchInput.addEventListener('input', filterDocuments);
-        
-        // Handle sort select
-        sortSelect.addEventListener('change', sortDocuments);
-        
-        function filterDocuments() {
-            const searchText = searchInput.value.toLowerCase();
-            const selectedCategories = Array.from(categoryFilters)
-                .filter(filter => filter.checked && filter.id !== 'all-categories')
-                .map(filter => filter.value);
-            
-            documentItems.forEach(item => {
-                const title = item.querySelector('.card-title').textContent.toLowerCase();
-                const category = item.getAttribute('data-category');
-                
-                const matchesSearch = title.includes(searchText);
-                const matchesCategory = allCategoriesCheckbox.checked || 
-                                      selectedCategories.length === 0 || 
-                                      selectedCategories.includes(category);
-                
-                if (matchesSearch && matchesCategory) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
-        
-        function sortDocuments() {
-            const container = document.getElementById('documents-container');
-            const items = Array.from(documentItems);
-            
-            items.sort((a, b) => {
-                const titleA = a.querySelector('.card-title').textContent;
-                const titleB = b.querySelector('.card-title').textContent;
-                
-                switch (sortSelect.value) {
-                    case 'name-asc':
-                        return titleA.localeCompare(titleB);
-                    case 'name-desc':
-                        return titleB.localeCompare(titleA);
-                    case 'date-asc':
-                    case 'date-desc':
-                    default:
-                        // Keep original order for now (would need date attributes on elements for proper sorting)
-                        return 0;
-                }
-            });
-            
-            // Re-append sorted items
-            items.forEach(item => {
-                container.appendChild(item);
             });
         }
     });

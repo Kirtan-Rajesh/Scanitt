@@ -52,8 +52,10 @@ db = SQLAlchemy(app, model_class=Base)
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"
 login_manager.login_message = 'Please log in to access this page.'
+# Set login view to redirect unauthorized users
+app.config['LOGIN_VIEW'] = 'login'
+login_manager.login_view = app.config['LOGIN_VIEW']
 
 # Define models before importing
 class User(db.Model):

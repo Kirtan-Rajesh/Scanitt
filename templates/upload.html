@@ -4,130 +4,93 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Upload Document</li>
-                </ol>
-            </nav>
-            
-            <h1 class="h2 mb-0">Upload Document</h1>
-            <p class="text-muted">Upload a document to scan, process, and organize.</p>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-8 mb-4 mb-md-0">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Document Upload</h5>
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h2 class="h4 mb-0">Upload New Document</h2>
                 </div>
-                <div class="card-body">
-                    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" id="upload-form">
-                        <div class="mb-4">
-                            <label for="file" class="form-label">Select Document</label>
-                            <input class="form-control" type="file" id="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required>
-                            <div class="form-text">Supported formats: JPG, PNG, PDF (max 16MB)</div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-file-upload fa-5x text-primary opacity-75"></i>
                         </div>
-                        
-                        <div id="preview-container" class="mb-4 d-none">
-                            <label class="form-label">Preview</label>
-                            <div class="text-center bg-light border rounded p-3">
-                                <img id="preview-image" src="" alt="Document preview" class="img-fluid mb-2" style="max-height: 300px;">
+                        <h3 class="h5">Smart Document Processing</h3>
+                        <p class="text-muted">Upload an image of your document to automatically scan, enhance, and categorize it.</p>
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                        <div class="mb-4">
+                            <label for="file" class="form-label visually-hidden">Choose Document</label>
+                            <div class="input-group mb-3">
+                                <input type="file" class="form-control" id="file" name="file" accept=".jpg,.jpeg,.png,.pdf" required>
+                                <button class="btn btn-primary" type="submit" id="uploadBtn">
+                                    <i class="fas fa-upload me-2"></i> Upload
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <small class="text-muted">Supported formats: JPG, PNG, PDF (max 16MB)</small>
                             </div>
                         </div>
                         
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary" id="upload-btn">
-                                <i class="fas fa-upload me-1"></i> Upload & Process
-                            </button>
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-                            </a>
+                        <div id="image-preview-container" class="text-center mb-4" style="display: none;">
+                            <h4 class="h6 mb-3">Preview</h4>
+                            <img id="image-preview" class="img-fluid border rounded" alt="Preview">
+                        </div>
+                        
+                        <div id="processing-status" class="d-none">
+                            <div class="text-center mb-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Processing...</span>
+                                </div>
+                            </div>
+                            <p class="text-center text-muted mb-0">Processing your document...</p>
                         </div>
                     </form>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Processing Features</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-crop-alt text-primary me-2"></i>
-                            <div>
-                                <strong>Auto Edge Detection</strong>
-                                <p class="mb-0 small text-muted">Automatically detects document edges</p>
+                <div class="card-footer bg-transparent">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-primary">
+                                    <i class="fas fa-crop-alt fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="h6 mb-1">Auto-Detection</h5>
+                                    <p class="text-muted small mb-0">Smart edge detection & cropping</p>
+                                </div>
                             </div>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-magic text-primary me-2"></i>
-                            <div>
-                                <strong>Image Enhancement</strong>
-                                <p class="mb-0 small text-muted">Optimizes readability and clarity</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-primary">
+                                    <i class="fas fa-font fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="h6 mb-1">OCR Technology</h5>
+                                    <p class="text-muted small mb-0">Extracts text automatically</p>
+                                </div>
                             </div>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-font text-primary me-2"></i>
-                            <div>
-                                <strong>Text Extraction</strong>
-                                <p class="mb-0 small text-muted">OCR technology extracts text content</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3 text-primary">
+                                    <i class="fas fa-tags fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="h6 mb-1">Smart Tagging</h5>
+                                    <p class="text-muted small mb-0">AI categorizes document</p>
+                                </div>
                             </div>
-                        </li>
-                        <li class="list-group-item d-flex align-items-center">
-                            <i class="fas fa-tag text-primary me-2"></i>
-                            <div>
-                                <strong>Auto-Categorization</strong>
-                                <p class="mb-0 small text-muted">AI categorizes your document</p>
-                            </div>
-                        </li>
-                    </ul>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Tips</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="text-muted mb-0" style="padding-left: 1.25rem;">
-                        <li class="mb-2">Ensure good lighting when taking photos</li>
-                        <li class="mb-2">Position document against a contrasting background</li>
-                        <li class="mb-2">Avoid shadows on the document</li>
-                        <li>Recommended resolution: at least 300 DPI</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Upload Progress Modal -->
-<div class="modal fade" id="uploadProgressModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Uploading & Processing</h5>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-3">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-                <div id="processing-step" class="text-center">
-                    <p class="mb-2">Uploading document...</p>
-                    <div class="progress mb-3">
-                        <div id="upload-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
-                    </div>
-                </div>
-                <p class="small text-muted text-center">This may take a moment. Please don't close this window.</p>
+            <div class="text-center mt-4">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
+                </a>
             </div>
         </div>
     </div>
@@ -137,83 +100,44 @@
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Set up image preview
         const fileInput = document.getElementById('file');
-        const previewContainer = document.getElementById('preview-container');
-        const previewImage = document.getElementById('preview-image');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const processingStatus = document.getElementById('processing-status');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadBtn = document.getElementById('uploadBtn');
         
+        // Preview the image before upload
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
-                const reader = new FileReader();
+                const file = this.files[0];
+                const fileName = file.name.toLowerCase();
                 
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    previewContainer.classList.remove('d-none');
-                };
-                
-                reader.readAsDataURL(this.files[0]);
+                // Only show preview for image files, not PDFs
+                if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png')) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreviewContainer.style.display = 'block';
+                    };
+                    
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreviewContainer.style.display = 'none';
+                }
             } else {
-                previewContainer.classList.add('d-none');
+                imagePreviewContainer.style.display = 'none';
             }
         });
         
-        // Handle form submission with progress tracking
-        const uploadForm = document.getElementById('upload-form');
-        const uploadBtn = document.getElementById('upload-btn');
-        const progressModal = new bootstrap.Modal(document.getElementById('uploadProgressModal'));
-        const progressBar = document.getElementById('upload-progress-bar');
-        const processingStep = document.getElementById('processing-step');
-        
-        uploadForm.addEventListener('submit', function(e) {
-            if (!fileInput.files || !fileInput.files[0]) {
-                return; // Let the default HTML validation handle this
+        // Show processing message during form submission
+        uploadForm.addEventListener('submit', function() {
+            if (fileInput.files && fileInput.files[0]) {
+                processingStatus.classList.remove('d-none');
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             }
-            
-            e.preventDefault();
-            
-            // Show progress modal
-            progressModal.show();
-            
-            // Create FormData for AJAX upload
-            const formData = new FormData(uploadForm);
-            
-            // Create and configure XHR request
-            const xhr = new XMLHttpRequest();
-            
-            // Track upload progress
-            xhr.upload.addEventListener('progress', function(e) {
-                if (e.lengthComputable) {
-                    const percentComplete = Math.round((e.loaded / e.total) * 100);
-                    progressBar.style.width = percentComplete + '%';
-                    progressBar.setAttribute('aria-valuenow', percentComplete);
-                    
-                    if (percentComplete === 100) {
-                        processingStep.innerHTML = '<p class="mb-2">Processing document...</p><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Processing...</span></div>';
-                    }
-                }
-            });
-            
-            // Handle request completion
-            xhr.addEventListener('load', function() {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    // Upload and processing successful, redirect to result page or dashboard
-                    window.location.href = '/dashboard';
-                } else {
-                    // Handle error
-                    progressModal.hide();
-                    alert('Error uploading document. Please try again.');
-                }
-            });
-            
-            // Handle network errors
-            xhr.addEventListener('error', function() {
-                progressModal.hide();
-                alert('Network error occurred. Please check your connection and try again.');
-            });
-            
-            // Send the request
-            xhr.open('POST', uploadForm.action);
-            xhr.send(formData);
         });
     });
 </script>

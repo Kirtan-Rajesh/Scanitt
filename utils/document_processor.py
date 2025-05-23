@@ -117,7 +117,9 @@ def detect_and_transform(image_path):
             approx = np.float32(cv2.boxPoints(rect))
             
         # If the image was resized, scale the points back to original size
+        original_height, original_width = original.shape[:2]
         if max(height, width) > max_dimension:
+            scale_factor = max_dimension / max(original_height, original_width)
             approx = approx / scale_factor
             
         # Order the points in correct sequence (top-left, top-right, bottom-right, bottom-left)
@@ -161,13 +163,27 @@ def detect_and_transform(image_path):
         logger.error(f"Error in document detection: {e}")
         # Return the original image if processing fails
         try:
-            if 'original' in locals():
+            # Safely reference 'original' only if it's defined
+            if 'original' in locals() and original is not None:
                 result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
                 return Image.fromarray(result_image)
             else:
+                # If 'original' is not defined, try to read the image again
+                image = cv2.imread(image_path)
+                if image is not None:
+                    result_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    return Image.fromarray(result_image)
+                else:
+                    return Image.open(image_path)
+        except Exception as e:
+            logger.error(f"Error converting original image: {e}")
+            # If conversion fails, try to directly open the original file
+            try:
                 return Image.open(image_path)
-        except:
-            return Image.open(image_path)
+            except Exception as e:
+                logger.error(f"Error opening image: {e}")
+                # Create a blank image as a last resort
+                return Image.new('RGB', (800, 1100), color='white')
 
 def enhance_image(image):
     """

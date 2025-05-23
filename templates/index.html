@@ -1,72 +1,65 @@
 {% extends 'layout.html' %}
 
-{% block title %}Scanitt - Smart Document Scanner & AI Organizer{% endblock %}
+{% block title %}Scanitt - Smart Document Scanner & Organizer{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="py-5 bg-dark text-light">
-    <div class="container py-5">
-        <div class="row align-items-center">
-            <div class="col-lg-6 mb-5 mb-lg-0">
-                <h1 class="display-4 fw-bold mb-3">Document Scanning Reimagined</h1>
-                <p class="lead mb-4">Transform your physical documents into organized digital files with advanced AI-powered scanning, categorization, and organization.</p>
-                <div class="d-grid gap-2 d-md-flex">
-                    {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg px-4">
-                        <i class="fas fa-th-large me-2"></i> Go to Dashboard
-                    </a>
-                    {% else %}
-                    <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg px-4">
-                        <i class="fas fa-user-plus me-2"></i> Get Started
-                    </a>
-                    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg px-4">
-                        <i class="fas fa-sign-in-alt me-2"></i> Login
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <img src="{{ url_for('static', filename='img/hero-image.png') }}" alt="Smart document scanning" class="img-fluid rounded-3 shadow-lg">
-            </div>
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Smart Document Scanner & Organizer</h1>
+        <p class="lead mb-5">Transform your physical documents into organized digital files with AI-powered categorization, text extraction, and smart search capabilities.</p>
+        <div>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-th-large me-2"></i> Go to Dashboard
+            </a>
+            {% else %}
+            <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg me-2">
+                <i class="fas fa-user-plus me-2"></i> Sign Up
+            </a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i> Login
+            </a>
+            {% endif %}
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="py-5">
+<section class="py-5 bg-body-tertiary">
     <div class="container">
-        <h2 class="text-center mb-5">Powerful Features</h2>
+        <h2 class="text-center mb-5">Smart Features</h2>
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 d-inline-flex mb-3" style="width: 65px; height: 65px;">
-                            <i class="fas fa-crop-alt fa-2x m-auto"></i>
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-crop-alt"></i>
                         </div>
-                        <h3 class="h5 card-title">Smart Edge Detection</h3>
-                        <p class="card-text">Automatically detects document edges and applies perspective correction.</p>
+                        <h5 class="card-title">Auto Detection & Crop</h5>
+                        <p class="card-text text-muted">Smart algorithms automatically detect document edges and apply perspective correction for perfect scans.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 d-inline-flex mb-3" style="width: 65px; height: 65px;">
-                            <i class="fas fa-file-alt fa-2x m-auto"></i>
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-font"></i>
                         </div>
-                        <h3 class="h5 card-title">OCR Technology</h3>
-                        <p class="card-text">Extract text from your documents for easy searching and editing.</p>
+                        <h5 class="card-title">Text Recognition (OCR)</h5>
+                        <p class="card-text text-muted">Extract text from your documents using advanced OCR technology, making them searchable and editable.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card h-100">
-                    <div class="card-body text-center">
-                        <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-circle p-3 d-inline-flex mb-3" style="width: 65px; height: 65px;">
-                            <i class="fas fa-brain fa-2x m-auto"></i>
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
                         </div>
-                        <h3 class="h5 card-title">AI Categorization</h3>
-                        <p class="card-text">Automatically categorizes and tags your documents for easy organization.</p>
+                        <h5 class="card-title">AI Categorization</h5>
+                        <p class="card-text text-muted">AI-powered categorization automatically labels your documents and extracts relevant information.</p>
                     </div>
                 </div>
             </div>
@@ -75,34 +68,48 @@
 </section>
 
 <!-- How It Works Section -->
-<section class="py-5 bg-light">
+<section class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5">See It In Action</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <img src="https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Document scanning in action">
-                    <div class="card-body">
-                        <h5 class="card-title">Document Detection</h5>
-                        <p class="card-text">Our system automatically detects document edges and applies perspective correction.</p>
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row align-items-center g-5">
+            <div class="col-md-6 order-md-2">
+                <img src="/static/img/hero-image.png" alt="Document Scanning Demo" class="img-fluid rounded shadow-lg">
+            </div>
+            <div class="col-md-6 order-md-1">
+                <div class="d-flex mb-4">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
+                        <span class="fw-bold">1</span>
+                    </div>
+                    <div class="ms-3">
+                        <h5>Capture Document</h5>
+                        <p class="text-muted">Upload any document image from your device.</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <img src="https://images.unsplash.com/photo-1568290696106-ace1c07d1fe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="Document organization">
-                    <div class="card-body">
-                        <h5 class="card-title">Organized Dashboard</h5>
-                        <p class="card-text">All your documents are neatly categorized and easily searchable.</p>
+                <div class="d-flex mb-4">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
+                        <span class="fw-bold">2</span>
+                    </div>
+                    <div class="ms-3">
+                        <h5>Automatic Processing</h5>
+                        <p class="text-muted">Our system automatically detects edges, enhances quality, and extracts text.</p>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100">
-                    <img src="https://images.unsplash.com/photo-1580894908361-967195033215?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80" class="card-img-top" alt="AI analysis">
-                    <div class="card-body">
-                        <h5 class="card-title">AI Insights</h5>
-                        <p class="card-text">Get smart summaries and analysis of your document contents.</p>
+                <div class="d-flex mb-4">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
+                        <span class="fw-bold">3</span>
+                    </div>
+                    <div class="ms-3">
+                        <h5>AI Categorization</h5>
+                        <p class="text-muted">Documents are automatically categorized and tagged for easy organization.</p>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
+                        <span class="fw-bold">4</span>
+                    </div>
+                    <div class="ms-3">
+                        <h5>Access Anywhere</h5>
+                        <p class="text-muted">Your documents are securely stored and accessible from any device.</p>
                     </div>
                 </div>
             </div>
@@ -111,17 +118,17 @@
 </section>
 
 <!-- CTA Section -->
-<section class="py-5 bg-primary text-light">
-    <div class="container py-4 text-center">
-        <h2 class="mb-3">Ready to Organize Your Documents?</h2>
-        <p class="lead mb-4">Join thousands of users who have transformed their document management with Scanitt.</p>
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to get started?</h2>
+        <p class="lead mb-4">Join thousands of users who are already organizing their documents with Scanitt.</p>
         {% if current_user.is_authenticated %}
-        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg px-4">
-            <i class="fas fa-th-large me-2"></i> Go to Dashboard
+        <a href="{{ url_for('upload_file') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-upload me-2"></i> Upload Your First Document
         </a>
         {% else %}
-        <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg px-4">
-            <i class="fas fa-user-plus me-2"></i> Sign Up Now
+        <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-user-plus me-2"></i> Create Free Account
         </a>
         {% endif %}
     </div>
