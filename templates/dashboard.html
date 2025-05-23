@@ -5,94 +5,71 @@
 {% block content %}
 <div class="container py-5">
     <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-5 fw-bold mb-3">
-                <i class="fas fa-th-large me-2"></i> Document Dashboard
-            </h1>
-            <p class="lead">All your scanned documents, organized by category and easily searchable.</p>
+        <div class="col-md-8">
+            <h1 class="h2 mb-0">My Documents</h1>
         </div>
-        <div class="col-auto d-flex align-items-center">
-            <a href="/" class="btn btn-primary">
-                <i class="fas fa-plus-circle me-2"></i> New Scan
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('upload_file') }}" class="btn btn-primary">
+                <i class="fas fa-upload me-1"></i> Upload New Document
             </a>
         </div>
     </div>
     
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" id="search-documents" class="form-control" placeholder="Search documents...">
-            </div>
-        </div>
-        <div class="col-md-6 text-md-end mt-3 mt-md-0">
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary active" id="view-grid">
-                    <i class="fas fa-th-large"></i> Grid
-                </button>
-                <button type="button" class="btn btn-outline-primary" id="view-list">
-                    <i class="fas fa-list"></i> List
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <div class="row">
-        <!-- Category Sidebar -->
+        <!-- Sidebar Filters -->
         <div class="col-md-3 mb-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Categories</h5>
-                </div>
-                <div class="card-body p-0">
-                    <ul class="category-list list-group list-group-flush">
-                        <li class="list-group-item">
-                            <a href="#all" class="active d-flex align-items-center">
-                                <i class="fas fa-folder me-2 category-icon"></i>
-                                All Documents
-                                <span class="badge bg-primary ms-auto">{{ documents|length }}</span>
-                            </a>
-                        </li>
-                        {% for category, docs in categories.items() %}
-                        <li class="list-group-item">
-                            <a href="#{{ category|replace(' ', '-')|lower }}" class="d-flex align-items-center">
-                                <i class="fas 
-                                {% if category == 'Receipt' %}fa-receipt
-                                {% elif category == 'Invoice' %}fa-file-invoice-dollar
-                                {% elif category == 'ID' %}fa-id-card
-                                {% elif category == 'Medical' %}fa-notes-medical
-                                {% elif category == 'Legal' %}fa-gavel
-                                {% elif category == 'Note' %}fa-sticky-note
-                                {% else %}fa-file-alt{% endif %} me-2 category-icon"></i>
-                                {{ category }}
-                                <span class="badge bg-secondary ms-auto">{{ docs|length }}</span>
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Filters</h5>
+                    <h5 class="card-title mb-0">Filter Documents</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-2">
-                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
-                            <i class="fas fa-calendar-alt me-1"></i> Today
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
-                            <i class="fas fa-calendar-week me-1"></i> This Week
-                        </button>
+                    <div class="mb-3">
+                        <label for="search-input" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search-input" placeholder="Search documents...">
                     </div>
-                    <div>
-                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
-                            <i class="fas fa-star me-1"></i> Favorites
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary me-1 mb-1">
-                            <i class="fas fa-star me-1"></i> Untagged
-                        </button>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Categories</label>
+                        <div class="form-check">
+                            <input class="form-check-input category-filter" type="checkbox" value="all" id="all-categories" checked>
+                            <label class="form-check-label" for="all-categories">
+                                All Categories
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input category-filter" type="checkbox" value="Receipt" id="category-receipt">
+                            <label class="form-check-label" for="category-receipt">
+                                Receipts
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input category-filter" type="checkbox" value="Invoice" id="category-invoice">
+                            <label class="form-check-label" for="category-invoice">
+                                Invoices
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input category-filter" type="checkbox" value="ID" id="category-id">
+                            <label class="form-check-label" for="category-id">
+                                ID Documents
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input category-filter" type="checkbox" value="Other" id="category-other">
+                            <label class="form-check-label" for="category-other">
+                                Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Sort by</label>
+                        <select class="form-select" id="sort-select">
+                            <option value="date-desc">Date (Newest First)</option>
+                            <option value="date-asc">Date (Oldest First)</option>
+                            <option value="name-asc">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -126,47 +103,35 @@
                                         {{ document.category }}
                                     </span>
                                 </span>
-                                <img src="{{ document.processed_path }}" class="card-img-top" alt="{{ document.original_filename }}">
+                                <img src="/static/{{ document.processed_path.replace('static/', '') }}" class="card-img-top document-thumbnail" alt="{{ document.original_filename }}">
                             </div>
                             <div class="card-body">
                                 <h5 class="card-title text-truncate">{{ document.original_filename }}</h5>
-                                <p class="card-text small text-muted mb-2">
-                                    <i class="fas fa-calendar-alt me-1"></i> {{ document.date_uploaded.split('T')[0] }}
+                                <p class="card-text text-muted small">
+                                    Uploaded {{ document.date_uploaded.strftime('%b %d, %Y') }}
                                 </p>
-                                <p class="card-text small mb-3">{{ document.summary[:100] }}{% if document.summary|length > 100 %}...{% endif %}</p>
-                                <div class="mb-3">
-                                    {% for tag in document.tags %}
-                                    <span class="badge bg-secondary me-1">{{ tag }}</span>
-                                    {% endfor %}
-                                </div>
                             </div>
-                            <div class="card-footer bg-transparent border-top-0">
-                                <div class="btn-group w-100">
-                                    <a href="/document/{{ document.id }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye me-1"></i> View
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-document-id="{{ document.id }}">
-                                        <i class="fas fa-tag me-1"></i> Edit
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger delete-document" data-document-id="{{ document.id }}">
-                                        <i class="fas fa-trash-alt me-1"></i> Delete
-                                    </button>
-                                </div>
+                            <div class="card-footer bg-transparent d-flex justify-content-between">
+                                <a href="{{ url_for('view_document', document_id=document.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i> View
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-document-btn" data-id="{{ document.id }}" data-name="{{ document.original_filename }}">
+                                    <i class="fas fa-trash-alt me-1"></i> Delete
+                                </button>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
-                <!-- Empty state -->
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-file-alt"></i>
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-file-upload fa-4x text-muted"></i>
                     </div>
-                    <h3>No Documents Yet</h3>
-                    <p class="text-muted mb-4">Start by scanning your first document.</p>
-                    <a href="/" class="btn btn-primary btn-lg">
-                        <i class="fas fa-upload me-2"></i> Scan New Document
+                    <h3 class="h4 mb-3">No Documents Yet</h3>
+                    <p class="text-muted mb-4">Upload your first document to get started.</p>
+                    <a href="{{ url_for('upload_file') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-1"></i> Upload Document
                     </a>
                 </div>
             {% endif %}
@@ -174,174 +139,151 @@
     </div>
 </div>
 
-<!-- Category Edit Modal -->
-<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editCategoryModalLabel">Edit Document Category</h5>
+                <h5 class="modal-title">Confirm Delete</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="edit-category-form">
-                    <div class="mb-3">
-                        <label for="category-select" class="form-label">Category</label>
-                        <select class="form-select category-select" id="category-select">
-                            <option value="Receipt">Receipt</option>
-                            <option value="Invoice">Invoice</option>
-                            <option value="ID">ID</option>
-                            <option value="Medical">Medical</option>
-                            <option value="Legal">Legal</option>
-                            <option value="Note">Note</option>
-                            <option value="Uncategorized">Uncategorized</option>
-                        </select>
-                    </div>
-                </form>
+                <p>Are you sure you want to delete <span id="document-name-placeholder"></span>?</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> This action cannot be undone.
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="save-category">Save Changes</button>
+                <a href="#" id="confirm-delete-btn" class="btn btn-danger">Delete</a>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Modal category edit
-        const editModal = document.getElementById('editCategoryModal');
-        if (editModal) {
-            editModal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const documentId = button.getAttribute('data-document-id');
-                const categorySelect = document.getElementById('category-select');
-                
-                // Store the document ID in the modal
-                editModal.setAttribute('data-document-id', documentId);
-                
-                // You would typically fetch the current category from the server here
-                // For now, we'll just reset the select
-                categorySelect.value = 'Uncategorized';
-            });
-            
-            // Save category button
-            const saveButton = document.getElementById('save-category');
-            if (saveButton) {
-                saveButton.addEventListener('click', function() {
-                    const documentId = editModal.getAttribute('data-document-id');
-                    const categorySelect = document.getElementById('category-select');
-                    const newCategory = categorySelect.value;
-                    
-                    // Call API to update category
-                    fetch(`/api/update-category/${documentId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ category: newCategory })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Close modal
-                            const modal = bootstrap.Modal.getInstance(editModal);
-                            modal.hide();
-                            
-                            // Show success message
-                            showAlert('Category updated successfully', 'success');
-                            
-                            // Update UI
-                            // In a real app, you'd reload the page or update just the document
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
-                        } else {
-                            showAlert(data.error || 'Error updating category', 'danger');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Update error:', error);
-                        showAlert('Error updating category. Please try again.', 'danger');
-                    });
-                });
-            }
-        }
+        // Handle delete buttons
+        const deleteButtons = document.querySelectorAll('.delete-document-btn');
+        const documentNamePlaceholder = document.getElementById('document-name-placeholder');
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
         
-        // Search functionality
-        const searchInput = document.getElementById('search-documents');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const query = this.value.toLowerCase();
-                const documents = document.querySelectorAll('.document-item');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const documentId = this.getAttribute('data-id');
+                const documentName = this.getAttribute('data-name');
                 
-                documents.forEach(doc => {
-                    const title = doc.querySelector('.card-title').textContent.toLowerCase();
-                    const category = doc.getAttribute('data-category').toLowerCase();
-                    const summary = doc.querySelector('.card-text:not(.text-muted)').textContent.toLowerCase();
-                    const tags = Array.from(doc.querySelectorAll('.badge')).map(tag => tag.textContent.toLowerCase());
-                    
-                    // Search in title, category, summary, and tags
-                    const isMatch = title.includes(query) || 
-                                  category.includes(query) || 
-                                  summary.includes(query) || 
-                                  tags.some(tag => tag.includes(query));
-                    
-                    doc.style.display = isMatch ? '' : 'none';
-                });
-            });
-        }
-        
-        // View toggle (grid/list)
-        const viewGrid = document.getElementById('view-grid');
-        const viewList = document.getElementById('view-list');
-        const documentsContainer = document.getElementById('documents-container');
-        
-        if (viewGrid && viewList && documentsContainer) {
-            viewGrid.addEventListener('click', function() {
-                documentsContainer.classList.remove('row-cols-1');
-                documentsContainer.classList.add('row-cols-md-2', 'row-cols-lg-3');
-                viewGrid.classList.add('active');
-                viewList.classList.remove('active');
-            });
-            
-            viewList.addEventListener('click', function() {
-                documentsContainer.classList.add('row-cols-1');
-                documentsContainer.classList.remove('row-cols-md-2', 'row-cols-lg-3');
-                viewList.classList.add('active');
-                viewGrid.classList.remove('active');
-            });
-        }
-        
-        // Category filtering
-        const categoryLinks = document.querySelectorAll('.category-list a');
-        categoryLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
+                documentNamePlaceholder.textContent = documentName;
+                confirmDeleteBtn.href = `/delete/${documentId}`;
                 
-                // Update active state
-                categoryLinks.forEach(l => l.classList.remove('active'));
-                this.classList.add('active');
-                
-                const category = this.getAttribute('href').substring(1);
-                filterDocumentsByCategory(category);
+                deleteModal.show();
             });
         });
         
-        function filterDocumentsByCategory(category) {
-            const documents = document.querySelectorAll('.document-item');
+        // Filter functionality
+        const searchInput = document.getElementById('search-input');
+        const categoryFilters = document.querySelectorAll('.category-filter');
+        const allCategoriesCheckbox = document.getElementById('all-categories');
+        const sortSelect = document.getElementById('sort-select');
+        const documentItems = document.querySelectorAll('.document-item');
+        
+        // Handle "All Categories" checkbox
+        allCategoriesCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                categoryFilters.forEach(filter => {
+                    if (filter.id !== 'all-categories') {
+                        filter.checked = false;
+                        filter.disabled = true;
+                    }
+                });
+            } else {
+                categoryFilters.forEach(filter => {
+                    if (filter.id !== 'all-categories') {
+                        filter.disabled = false;
+                    }
+                });
+            }
             
-            documents.forEach(doc => {
-                if (category === 'all') {
-                    doc.style.display = '';
+            filterDocuments();
+        });
+        
+        // Handle category filter checkboxes
+        categoryFilters.forEach(filter => {
+            if (filter.id !== 'all-categories') {
+                filter.addEventListener('change', function() {
+                    // Uncheck "All Categories" if any specific category is checked
+                    if (this.checked && allCategoriesCheckbox.checked) {
+                        allCategoriesCheckbox.checked = false;
+                        categoryFilters.forEach(f => {
+                            if (f.id !== 'all-categories') {
+                                f.disabled = false;
+                            }
+                        });
+                    }
+                    
+                    filterDocuments();
+                });
+            }
+        });
+        
+        // Handle search input
+        searchInput.addEventListener('input', filterDocuments);
+        
+        // Handle sort select
+        sortSelect.addEventListener('change', sortDocuments);
+        
+        function filterDocuments() {
+            const searchText = searchInput.value.toLowerCase();
+            const selectedCategories = Array.from(categoryFilters)
+                .filter(filter => filter.checked && filter.id !== 'all-categories')
+                .map(filter => filter.value);
+            
+            documentItems.forEach(item => {
+                const title = item.querySelector('.card-title').textContent.toLowerCase();
+                const category = item.getAttribute('data-category');
+                
+                const matchesSearch = title.includes(searchText);
+                const matchesCategory = allCategoriesCheckbox.checked || 
+                                      selectedCategories.length === 0 || 
+                                      selectedCategories.includes(category);
+                
+                if (matchesSearch && matchesCategory) {
+                    item.style.display = '';
                 } else {
-                    const docCategory = doc.getAttribute('data-category').toLowerCase().replace(' ', '-');
-                    doc.style.display = docCategory === category.toLowerCase() ? '' : 'none';
+                    item.style.display = 'none';
                 }
+            });
+        }
+        
+        function sortDocuments() {
+            const container = document.getElementById('documents-container');
+            const items = Array.from(documentItems);
+            
+            items.sort((a, b) => {
+                const titleA = a.querySelector('.card-title').textContent;
+                const titleB = b.querySelector('.card-title').textContent;
+                
+                switch (sortSelect.value) {
+                    case 'name-asc':
+                        return titleA.localeCompare(titleB);
+                    case 'name-desc':
+                        return titleB.localeCompare(titleA);
+                    case 'date-asc':
+                    case 'date-desc':
+                    default:
+                        // Keep original order for now (would need date attributes on elements for proper sorting)
+                        return 0;
+                }
+            });
+            
+            // Re-append sorted items
+            items.forEach(item => {
+                container.appendChild(item);
             });
         }
     });
 </script>
-{% endblock %}
-
 {% endblock %}

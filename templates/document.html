@@ -135,7 +135,7 @@
                         </div>
                         
                         <div class="btn-group">
-                            <a href="{{ url_for('static', filename=document.processed_path.replace('static/', '')) }}" download="{{ document.original_filename }}" class="btn btn-outline-success">
+                            <a href="/static/{{ document.processed_path.replace('static/', '') }}" download="{{ document.original_filename }}" class="btn btn-outline-success">
                                 <i class="fas fa-download me-1"></i> Download
                             </a>
                         </div>
@@ -201,17 +201,19 @@
                     <div class="mb-3">
                         <label class="form-label text-muted">Tags</label>
                         <div class="document-tags">
-                            {% for tag in document.tags %}
-                                <span class="badge bg-secondary">{{ tag }}</span>
+                            {% if document.tags %}
+                                {% for tag in document.tags %}
+                                    <span class="badge bg-secondary">{{ tag }}</span>
+                                {% endfor %}
                             {% else %}
                                 <span class="text-muted fst-italic">No tags</span>
-                            {% endfor %}
+                            {% endif %}
                         </div>
                     </div>
                     
                     <div class="mb-3">
                         <label class="form-label text-muted">Summary</label>
-                        <p class="mb-0 small">{{ document.summary|default('No summary available.', true) }}</p>
+                        <p class="mb-0 small">{{ document.summary or 'No summary available.' }}</p>
                     </div>
                     
                     <!-- Document actions -->
