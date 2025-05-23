@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Show filter options modal
+ * Show filter options modal with advanced filtering capabilities
  */
 function showFilterOptions() {
     // Create modal if it doesn't exist
@@ -43,28 +43,138 @@ function showFilterOptions() {
         modal.setAttribute('aria-hidden', 'true');
         
         modal.innerHTML = `
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="filterModalLabel">Apply Filter</h5>
+                    <h5 class="modal-title" id="filterModalLabel">Advanced Document Filters</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="filter-options d-flex flex-wrap justify-content-center gap-2 mb-3">
-                        <button class="btn btn-outline-primary filter-option" data-filter="none">Original</button>
-                        <button class="btn btn-outline-primary filter-option" data-filter="grayscale">Grayscale</button>
-                        <button class="btn btn-outline-primary filter-option" data-filter="bw">Black & White</button>
-                        <button class="btn btn-outline-primary filter-option" data-filter="enhance">Enhanced</button>
-                        <button class="btn btn-outline-primary filter-option" data-filter="sharpen">Sharpen</button>
-                        <button class="btn btn-outline-primary filter-option" data-filter="contrast">High Contrast</button>
-                    </div>
-                    <div class="filter-preview text-center">
-                        <img id="filter-preview-image" src="#" alt="Filter preview" class="img-fluid border rounded">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="filter-preview text-center mb-3">
+                                <img id="filter-preview-image" src="#" alt="Filter preview" class="img-fluid border rounded shadow-sm">
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <span class="badge bg-primary px-3 py-2">Preview</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="filter-categories">
+                                <div class="list-group mb-3">
+                                    <button class="list-group-item list-group-item-action active" data-filter-category="presets">
+                                        <i class="fas fa-sliders-h me-2"></i> Presets
+                                    </button>
+                                    <button class="list-group-item list-group-item-action" data-filter-category="document">
+                                        <i class="fas fa-file-alt me-2"></i> Document
+                                    </button>
+                                    <button class="list-group-item list-group-item-action" data-filter-category="advanced">
+                                        <i class="fas fa-cogs me-2"></i> Advanced
+                                    </button>
+                                </div>
+                                
+                                <!-- Filter selection buttons -->
+                                <div id="presets-filters" class="filter-category-content">
+                                    <div class="mb-2 small text-muted">Select a preset filter:</div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-sm btn-outline-primary filter-option active" data-filter="none">
+                                            <i class="fas fa-undo me-2"></i> Original
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="grayscale">
+                                            <i class="fas fa-adjust me-2"></i> Grayscale
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="bw">
+                                            <i class="fas fa-tint me-2"></i> Black & White
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="enhance">
+                                            <i class="fas fa-magic me-2"></i> Enhanced
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="sharpen">
+                                            <i class="fas fa-expand-alt me-2"></i> Sharpen
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="contrast">
+                                            <i class="fas fa-adjust me-2"></i> High Contrast
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="vintage">
+                                            <i class="fas fa-history me-2"></i> Vintage
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="cool">
+                                            <i class="fas fa-snowflake me-2"></i> Cool Tone
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="warm">
+                                            <i class="fas fa-sun me-2"></i> Warm Tone
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="document-filters" class="filter-category-content d-none">
+                                    <div class="mb-2 small text-muted">Document optimization:</div>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="scan">
+                                            <i class="fas fa-scanner me-2"></i> Scanned Document
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="receipt">
+                                            <i class="fas fa-receipt me-2"></i> Receipt
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="text">
+                                            <i class="fas fa-font me-2"></i> Text Document
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="photo">
+                                            <i class="fas fa-camera me-2"></i> Photo
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary filter-option" data-filter="handwriting">
+                                            <i class="fas fa-pen-fancy me-2"></i> Handwriting
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="advanced-filters" class="filter-category-content d-none">
+                                    <div class="mb-2 small text-muted">Fine-tune manually:</div>
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Brightness</span>
+                                            <span class="filter-value" id="brightness-value">0</span>
+                                        </label>
+                                        <input type="range" class="form-range filter-slider" id="brightness-slider" 
+                                            min="-50" max="50" value="0" data-filter-param="brightness">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Contrast</span>
+                                            <span class="filter-value" id="contrast-value">0</span>
+                                        </label>
+                                        <input type="range" class="form-range filter-slider" id="contrast-slider" 
+                                            min="-50" max="50" value="0" data-filter-param="contrast">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Saturation</span>
+                                            <span class="filter-value" id="saturation-value">0</span>
+                                        </label>
+                                        <input type="range" class="form-range filter-slider" id="saturation-slider" 
+                                            min="-50" max="50" value="0" data-filter-param="saturation">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label d-flex justify-content-between">
+                                            <span>Sharpness</span>
+                                            <span class="filter-value" id="sharpness-value">0</span>
+                                        </label>
+                                        <input type="range" class="form-range filter-slider" id="sharpness-slider" 
+                                            min="0" max="100" value="0" data-filter-param="sharpness">
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary w-100" id="reset-advanced-filters">
+                                        Reset All Adjustments
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="apply-filter-btn">Apply Filter</button>
+                    <button type="button" class="btn btn-primary" id="apply-filter-btn">
+                        <i class="fas fa-check me-1"></i> Apply Filter
+                    </button>
                 </div>
             </div>
         </div>
@@ -72,27 +182,171 @@ function showFilterOptions() {
         
         document.body.appendChild(modal);
         
+        // Handle filter category tabs
+        const filterCategories = modal.querySelectorAll('[data-filter-category]');
+        const filterContents = modal.querySelectorAll('.filter-category-content');
+        
+        filterCategories.forEach(category => {
+            category.addEventListener('click', function() {
+                // Remove active class from all categories
+                filterCategories.forEach(c => c.classList.remove('active'));
+                // Add active class to clicked category
+                this.classList.add('active');
+                
+                // Hide all content sections
+                filterContents.forEach(content => content.classList.add('d-none'));
+                
+                // Show selected content section
+                const categoryName = this.getAttribute('data-filter-category');
+                const contentElement = document.getElementById(`${categoryName}-filters`);
+                if (contentElement) {
+                    contentElement.classList.remove('d-none');
+                }
+            });
+        });
+        
         // Handle filter option clicks
         const filterOptions = modal.querySelectorAll('.filter-option');
         filterOptions.forEach(option => {
             option.addEventListener('click', function() {
-                // Remove active class from all options
-                filterOptions.forEach(o => o.classList.remove('active'));
+                // Remove active class from all options within the same category
+                const category = this.closest('.filter-category-content');
+                if (category) {
+                    category.querySelectorAll('.filter-option').forEach(o => o.classList.remove('active'));
+                }
+                
                 // Add active class to clicked option
                 this.classList.add('active');
+                
                 // Apply preview filter
                 const filter = this.getAttribute('data-filter');
                 previewFilter(filter);
+                
+                // Reset advanced sliders if selecting a preset
+                if (category && category.id !== 'advanced-filters') {
+                    resetAdvancedFilters();
+                }
             });
         });
+        
+        // Handle advanced filter sliders
+        const filterSliders = modal.querySelectorAll('.filter-slider');
+        filterSliders.forEach(slider => {
+            slider.addEventListener('input', function() {
+                const param = this.getAttribute('data-filter-param');
+                const value = this.value;
+                const valueElement = document.getElementById(`${param}-value`);
+                if (valueElement) {
+                    valueElement.textContent = value;
+                }
+                
+                // Apply advanced filter
+                applyAdvancedFilter();
+            });
+        });
+        
+        // Reset advanced filters button
+        const resetAdvancedBtn = document.getElementById('reset-advanced-filters');
+        if (resetAdvancedBtn) {
+            resetAdvancedBtn.addEventListener('click', resetAdvancedFilters);
+        }
+        
+        function resetAdvancedFilters() {
+            const sliders = document.querySelectorAll('.filter-slider');
+            sliders.forEach(slider => {
+                slider.value = slider.id === 'sharpness-slider' ? 0 : 0;
+                const param = slider.getAttribute('data-filter-param');
+                const valueElement = document.getElementById(`${param}-value`);
+                if (valueElement) {
+                    valueElement.textContent = slider.value;
+                }
+            });
+            
+            // Reset to original if in advanced tab
+            if (!document.getElementById('advanced-filters').classList.contains('d-none')) {
+                applyAdvancedFilter();
+            }
+        }
+        
+        function applyAdvancedFilter() {
+            const brightness = parseInt(document.getElementById('brightness-slider').value);
+            const contrast = parseInt(document.getElementById('contrast-slider').value);
+            const saturation = parseInt(document.getElementById('saturation-slider').value);
+            const sharpness = parseInt(document.getElementById('sharpness-slider').value);
+            
+            // Get preview image
+            const previewImage = document.getElementById('filter-preview-image');
+            if (previewImage) {
+                // Convert slider values to CSS filter values
+                const brightnessVal = 1 + (brightness / 100);
+                const contrastVal = 1 + (contrast / 50);
+                const saturationVal = 1 + (saturation / 50);
+                
+                // Apply CSS filters
+                let filterString = `brightness(${brightnessVal}) contrast(${contrastVal}) saturate(${saturationVal})`;
+                
+                // Add sepia for sharpness simulation (not true sharpness but a visual approximation)
+                if (sharpness > 0) {
+                    const sepiaAmount = sharpness / 100 * 0.2;
+                    filterString += ` sepia(${sepiaAmount})`;
+                }
+                
+                previewImage.style.filter = filterString;
+                
+                // Make "none" button inactive
+                const noneButton = document.querySelector('.filter-option[data-filter="none"]');
+                if (noneButton) {
+                    noneButton.classList.remove('active');
+                }
+            }
+        }
         
         // Handle apply filter button
         const applyFilterBtn = document.getElementById('apply-filter-btn');
         applyFilterBtn.addEventListener('click', function() {
-            applySelectedFilter();
+            // Check which tab is active
+            const activeCategory = document.querySelector('.list-group-item.active').getAttribute('data-filter-category');
+            
+            if (activeCategory === 'advanced') {
+                // Apply advanced filter
+                applyAdvancedFilterToMain();
+            } else {
+                // Apply preset filter
+                applySelectedFilter();
+            }
+            
             const modalInstance = bootstrap.Modal.getInstance(modal);
             modalInstance.hide();
         });
+        
+        function applyAdvancedFilterToMain() {
+            const brightness = parseInt(document.getElementById('brightness-slider').value);
+            const contrast = parseInt(document.getElementById('contrast-slider').value);
+            const saturation = parseInt(document.getElementById('saturation-slider').value);
+            const sharpness = parseInt(document.getElementById('sharpness-slider').value);
+            
+            // Get main document image
+            const documentImage = document.getElementById('document-image');
+            if (!documentImage) return;
+            
+            // Convert slider values to CSS filter values
+            const brightnessVal = 1 + (brightness / 100);
+            const contrastVal = 1 + (contrast / 50);
+            const saturationVal = 1 + (saturation / 50);
+            
+            // Apply CSS filters
+            let filterString = `brightness(${brightnessVal}) contrast(${contrastVal}) saturate(${saturationVal})`;
+            
+            // Add sepia for sharpness simulation
+            if (sharpness > 0) {
+                const sepiaAmount = sharpness / 100 * 0.2;
+                filterString += ` sepia(${sepiaAmount})`;
+            }
+            
+            documentImage.style.filter = filterString;
+            
+            showAlert('Custom filter applied to document', 'success');
+        }
     }
     
     // Store original image before showing modal
@@ -123,7 +377,7 @@ function previewFilter(filter) {
     
     currentFilter = filter;
     
-    // Simple client-side filters using CSS
+    // Advanced CSS filters for document processing
     switch (filter) {
         case 'none':
             previewImage.style.filter = 'none';
@@ -138,11 +392,34 @@ function previewFilter(filter) {
             previewImage.style.filter = 'contrast(1.2) brightness(1.1) saturate(1.1)';
             break;
         case 'sharpen':
-            // Can't truly sharpen with CSS, but we can fake it a bit
-            previewImage.style.filter = 'contrast(1.3) brightness(1.05)';
+            previewImage.style.filter = 'contrast(1.3) brightness(1.05) saturate(0.9)';
             break;
         case 'contrast':
             previewImage.style.filter = 'contrast(1.8) brightness(0.9)';
+            break;
+        case 'vintage':
+            previewImage.style.filter = 'sepia(60%) contrast(1.1) brightness(0.9) saturate(0.8)';
+            break;
+        case 'cool':
+            previewImage.style.filter = 'saturate(0.8) brightness(1.1) hue-rotate(20deg)';
+            break;
+        case 'warm':
+            previewImage.style.filter = 'saturate(1.2) brightness(1.05) sepia(20%) hue-rotate(-10deg)';
+            break;
+        case 'scan':
+            previewImage.style.filter = 'grayscale(30%) contrast(1.4) brightness(1.1) saturate(0.9)';
+            break;
+        case 'receipt':
+            previewImage.style.filter = 'grayscale(90%) contrast(1.6) brightness(1.15)';
+            break;
+        case 'text':
+            previewImage.style.filter = 'contrast(1.4) brightness(1.1) grayscale(40%)';
+            break;
+        case 'photo':
+            previewImage.style.filter = 'contrast(1.15) brightness(1.05) saturate(1.2)';
+            break;
+        case 'handwriting':
+            previewImage.style.filter = 'contrast(1.5) brightness(1.2) grayscale(15%)';
             break;
     }
 }

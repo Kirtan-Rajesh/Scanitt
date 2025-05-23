@@ -157,7 +157,6 @@ def detect_and_transform(image_path):
         logger.error(f"Error in document detection: {e}")
         # Return the original image if processing fails
         try:
-            # original is defined at the start of the try block, so it should be available here
             if 'original' in locals():
                 result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
                 return Image.fromarray(result_image)

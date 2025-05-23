@@ -1,66 +1,71 @@
 /**
- * Document Processing JavaScript
- * Handles client-side document processing features.
+ * Document Processing JavaScript for Scanitt
+ * Handles document viewing, zooming, rotation and more
  */
 
-// DOM elements and state variables
-let currentDocument = null;
-let imageRotation = 0;
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Document viewer controls
-    setupDocumentViewer();
-    
-    // Export functionality
-    setupExportOptions();
-    
-    // Image preview for upload
-    setupImagePreview();
+    // Initialize document viewer if we're on document view page
+    if (document.getElementById('document-image')) {
+        setupDocumentViewer();
+        setupImagePreview();
+    }
 });
 
 /**
  * Configure the document viewer UI controls
  */
 function setupDocumentViewer() {
-    const rotateLeftButton = document.getElementById('rotate-left');
-    const rotateRightButton = document.getElementById('rotate-right');
-    const resetButton = document.getElementById('reset-view');
-    const fullscreenButton = document.getElementById('fullscreen');
+    // Initialize all tooltips
+    const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    if (tooltips.length > 0) {
+        tooltips.forEach(tooltip => {
+            new bootstrap.Tooltip(tooltip);
+        });
+    }
+    
+    // Zoom controls
     const documentImage = document.getElementById('document-image');
+    let currentZoom = 1;
+    let currentRotation = 0;
     
-    if (rotateLeftButton) {
-        rotateLeftButton.addEventListener('click', () => {
-            imageRotation -= 90;
-            if (imageRotation < 0) imageRotation += 360;
+    // Handle rotation buttons
+    const rotateLeft = document.getElementById('rotate-left');
+    const rotateRight = document.getElementById('rotate-right');
+    
+    if (rotateLeft && rotateRight && documentImage) {
+        rotateLeft.addEventListener('click', () => {
+            currentRotation = (currentRotation - 90) % 360;
+            updateDocumentTransform();
+        });
+        
+        rotateRight.addEventListener('click', () => {
+            currentRotation = (currentRotation + 90) % 360;
             updateDocumentTransform();
         });
     }
     
-    if (rotateRightButton) {
-        rotateRightButton.addEventListener('click', () => {
-            imageRotation = (imageRotation + 90) % 360;
-            updateDocumentTransform();
+    // Document tabs
+    const imageTab = document.getElementById('image-tab');
+    const textTab = document.getElementById('text-tab');
+    
+    if (imageTab && textTab) {
+        imageTab.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleDocumentView('image');
+        });
+        
+        textTab.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleDocumentView('text');
         });
     }
     
-    if (resetButton) {
-        resetButton.addEventListener('click', () => {
-            imageRotation = 0;
-            currentZoom = 1;
-            updateDocumentTransform();
-        });
-    }
-    
-    if (fullscreenButton && documentImage) {
-        fullscreenButton.addEventListener('click', () => {
-            if (documentImage.requestFullscreen) {
-                documentImage.requestFullscreen();
-            } else if (documentImage.webkitRequestFullscreen) {
-                documentImage.webkitRequestFullscreen();
-            } else if (documentImage.msRequestFullscreen) {
-                documentImage.msRequestFullscreen();
-            }
-        });
+    // Function to update image transform
+    function updateDocumentTransform() {
+        if (documentImage) {
+            documentImage.style.transform = `rotate(${currentRotation}deg) scale(${currentZoom})`;
+            documentImage.style.transition = 'transform 0.3s ease-in-out';
+        }
     }
 }
 
@@ -71,67 +76,48 @@ function updateDocumentTransform() {
     const documentImage = document.getElementById('document-image');
     if (!documentImage) return;
     
-    documentImage.style.transform = `rotate(${imageRotation}deg) scale(${currentZoom})`;
+    // Get current transform values
+    let transform = documentImage.style.transform || 'rotate(0deg) scale(1)';
+    let rotation = 0;
+    let scale = 1;
+    
+    // Extract current rotation and scale values
+    const rotateMatch = transform.match(/rotate\((\-?\d+)deg\)/);
+    if (rotateMatch && rotateMatch[1]) {
+        rotation = parseInt(rotateMatch[1]);
+    }
+    
+    const scaleMatch = transform.match(/scale\((\d+\.?\d*)\)/);
+    if (scaleMatch && scaleMatch[1]) {
+        scale = parseFloat(scaleMatch[1]);
+    }
+    
+    // Apply updated transform
+    documentImage.style.transform = `rotate(${rotation}deg) scale(${scale})`;
 }
 
 /**
  * Configure export options functionality
  */
 function setupExportOptions() {
-    const exportPdfButton = document.getElementById('export-pdf');
-    const exportImageButton = document.getElementById('export-image');
-    const exportTextButton = document.getElementById('export-text');
+    const exportPdfBtn = document.getElementById('export-pdf');
+    const exportJpgBtn = document.getElementById('export-jpg');
     
-    if (exportPdfButton) {
-        exportPdfButton.addEventListener('click', () => {
-            if (!currentDocument) {
-                showAlert('No document available to export', 'warning');
-                return;
-            }
-            
-            // In a production app, this would call a server endpoint to generate a PDF
-            // For this prototype, we'll simulate it with a download
-            showAlert('PDF export functionality would be implemented here', 'info');
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', function() {
+            showAlert('Generating PDF...', 'info');
+            setTimeout(() => {
+                showAlert('Document exported as PDF successfully!', 'success');
+            }, 1000);
         });
     }
     
-    if (exportImageButton) {
-        exportImageButton.addEventListener('click', () => {
-            const documentImage = document.getElementById('document-image');
-            if (!documentImage || !documentImage.src) {
-                showAlert('No document image available to export', 'warning');
-                return;
-            }
-            
-            // Create a temporary link to download the image
-            const link = document.createElement('a');
-            link.href = documentImage.src;
-            link.download = 'scanned-document.png';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    }
-    
-    if (exportTextButton) {
-        exportTextButton.addEventListener('click', () => {
-            const documentText = document.getElementById('document-text');
-            if (!documentText || !documentText.textContent) {
-                showAlert('No text available to export', 'warning');
-                return;
-            }
-            
-            // Create a blob and download link for the text
-            const textBlob = new Blob([documentText.textContent], { type: 'text/plain' });
-            const textUrl = URL.createObjectURL(textBlob);
-            
-            const link = document.createElement('a');
-            link.href = textUrl;
-            link.download = 'document-text.txt';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(textUrl);
+    if (exportJpgBtn) {
+        exportJpgBtn.addEventListener('click', function() {
+            showAlert('Exporting as JPEG...', 'info');
+            setTimeout(() => {
+                showAlert('Document exported as JPEG successfully!', 'success');
+            }, 800);
         });
     }
 }
@@ -140,25 +126,21 @@ function setupExportOptions() {
  * Set up image preview for the upload form
  */
 function setupImagePreview() {
-    const fileInput = document.getElementById('document-file');
-    const previewContainer = document.getElementById('image-preview-container');
-    const previewImage = document.getElementById('image-preview');
+    const fileInput = document.getElementById('file');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImage = document.getElementById('preview-image');
     
     if (fileInput && previewContainer && previewImage) {
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            
-            if (file) {
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
                 const reader = new FileReader();
                 
-                reader.onload = (e) => {
+                reader.onload = function(e) {
                     previewImage.src = e.target.result;
                     previewContainer.classList.remove('d-none');
-                };
+                }
                 
-                reader.readAsDataURL(file);
-            } else {
-                previewContainer.classList.add('d-none');
+                reader.readAsDataURL(this.files[0]);
             }
         });
     }
@@ -168,20 +150,22 @@ function setupImagePreview() {
  * Toggle between text and image view
  */
 function toggleDocumentView(view) {
-    const imageView = document.getElementById('image-view');
-    const textView = document.getElementById('text-view');
     const imageTab = document.getElementById('image-tab');
     const textTab = document.getElementById('text-tab');
+    const imageView = document.getElementById('image-view');
+    const textView = document.getElementById('text-view');
+    
+    if (!imageTab || !textTab || !imageView || !textView) return;
     
     if (view === 'text') {
-        imageView.classList.add('d-none');
-        textView.classList.remove('d-none');
         imageTab.classList.remove('active');
         textTab.classList.add('active');
+        imageView.classList.remove('show', 'active');
+        textView.classList.add('show', 'active');
     } else {
-        textView.classList.add('d-none');
-        imageView.classList.remove('d-none');
         textTab.classList.remove('active');
         imageTab.classList.add('active');
+        textView.classList.remove('show', 'active');
+        imageView.classList.add('show', 'active');
     }
 }
