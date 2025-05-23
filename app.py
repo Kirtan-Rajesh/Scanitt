@@ -49,13 +49,17 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize SQLAlchemy with the app
 db = SQLAlchemy(app, model_class=Base)
 
-# Initialize login manager
+# Initialize login manager - don't assign login_view directly
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_message = 'Please log in to access this page.'
-# Set login view to redirect unauthorized users
-app.config['LOGIN_VIEW'] = 'login'
-login_manager.login_view = app.config['LOGIN_VIEW']
+
+# Monkeypatch the login_view at runtime to avoid type errors
+def patch_login_manager():
+    import types
+    login_manager.__dict__['login_view'] = 'login'
+
+patch_login_manager()
 
 # Define models before importing
 class User(db.Model):

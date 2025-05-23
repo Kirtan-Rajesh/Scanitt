@@ -163,20 +163,15 @@ def detect_and_transform(image_path):
         logger.error(f"Error in document detection: {e}")
         # Return the original image if processing fails
         try:
-            # Safely reference 'original' only if it's defined
-            if 'original' in locals() and original is not None:
-                result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
+            # Try to read the image again
+            backup_image = cv2.imread(image_path)
+            if backup_image is not None:
+                result_image = cv2.cvtColor(backup_image, cv2.COLOR_BGR2RGB)
                 return Image.fromarray(result_image)
             else:
-                # If 'original' is not defined, try to read the image again
-                image = cv2.imread(image_path)
-                if image is not None:
-                    result_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    return Image.fromarray(result_image)
-                else:
-                    return Image.open(image_path)
+                return Image.open(image_path)
         except Exception as e:
-            logger.error(f"Error converting original image: {e}")
+            logger.error(f"Error converting image: {e}")
             # If conversion fails, try to directly open the original file
             try:
                 return Image.open(image_path)
