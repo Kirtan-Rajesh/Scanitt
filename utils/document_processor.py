@@ -6,28 +6,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def order_points(pts):
-    """
-    Order points in clockwise order starting from top-left
-    """
-    # Initialize ordered points array
-    rect = np.zeros((4, 2), dtype="float32")
-    
-    # Top-left will have the smallest sum
-    # Bottom-right will have the largest sum
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-    
-    # Compute the difference between the points
-    # Top-right will have the smallest difference
-    # Bottom-left will have the largest difference
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-    
-    return rect
-
 def detect_and_transform(image_path):
     """
     Detect document edges in an image and apply perspective transformation
@@ -49,9 +27,11 @@ def detect_and_transform(image_path):
         # Keep a copy of the original image
         original = image.copy()
         
+        # Get image dimensions
+        height, width = image.shape[:2]
+        
         # Resize large images for faster processing while maintaining aspect ratio
         max_dimension = 1500
-        height, width = image.shape[:2]
         if max(height, width) > max_dimension:
             scale_factor = max_dimension / max(height, width)
             image = cv2.resize(image, None, fx=scale_factor, fy=scale_factor)
@@ -101,31 +81,45 @@ def detect_and_transform(image_path):
             logger.warning("No contours found in the image. Using original image.")
             result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
             return Image.fromarray(result_image)
-            
+        
         # Find the largest contour by area
         largest_contour = max(contours, key=cv2.contourArea)
         
-        # Approximate the contour to a polygon
-        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+        # Approximate the contour to get a polygon
+        peri = cv2.arcLength(largest_contour, True)
+        approx = cv2.approxPolyDP(largest_contour, 0.02 * peri, True)
         
-        # If the polygon has 4 points, we've likely found our document
-        # If not, we'll use the bounding rectangle
+        # If we don't get a quadrilateral, try to find the best 4 points
         if len(approx) != 4:
-            logger.info("Contour doesn't have 4 points, using minimum area rectangle")
-            rect = cv2.minAreaRect(largest_contour)
-            approx = np.float32(cv2.boxPoints(rect))
+            # Try with different epsilon values
+            for epsilon_factor in [0.01, 0.03, 0.05]:
+                approx = cv2.approxPolyDP(largest_contour, epsilon_factor * peri, True)
+                if len(approx) == 4:
+                    break
             
-        # If the image was resized, scale the points back to original size
-        original_height, original_width = original.shape[:2]
-        if max(height, width) > max_dimension:
-            scale_factor = max_dimension / max(original_height, original_width)
-            approx = approx / scale_factor
-            
-        # Order the points in correct sequence (top-left, top-right, bottom-right, bottom-left)
-        approx = order_points(approx.reshape(4, 2))
+            # If still not 4 points, use a rectangle
+            if len(approx) != 4:
+                logger.warning(f"Document corners not clearly detected (found {len(approx)} points). Using bounding rectangle.")
+                rect = cv2.minAreaRect(largest_contour)
+                approx = cv2.boxPoints(rect)
+                approx = np.array(approx, dtype=np.int32)
         
-        # Calculate the width and height of the new image
+        # Make sure points are in the right order (top-left, top-right, bottom-right, bottom-left)
+        approx = np.array(approx, dtype=np.float32)
+        if len(approx) == 4:
+            # Sum of x+y coordinates - smallest is top-left, largest is bottom-right
+            s = approx.sum(axis=1)
+            rect = np.zeros((4, 2), dtype=np.float32)
+            rect[0] = approx[np.argmin(s)]  # top-left
+            rect[2] = approx[np.argmax(s)]  # bottom-right
+            
+            # Difference of y-x coordinates - smallest is top-right, largest is bottom-left
+            diff = np.diff(approx, axis=1)
+            rect[1] = approx[np.argmin(diff)]  # top-right
+            rect[3] = approx[np.argmax(diff)]  # bottom-left
+            approx = rect
+        
+        # Get width and height of the document
         width_top = np.sqrt(((approx[1][0] - approx[0][0]) ** 2) + ((approx[1][1] - approx[0][1]) ** 2))
         width_bottom = np.sqrt(((approx[2][0] - approx[3][0]) ** 2) + ((approx[2][1] - approx[3][1]) ** 2))
         width = max(int(width_top), int(width_bottom))
@@ -135,8 +129,8 @@ def detect_and_transform(image_path):
         height = max(int(height_left), int(height_right))
         
         # Set a minimum size
-        width = max(width, 800)
-        height = max(height, 1100)
+        width = max(width, 500)
+        height = max(height, 700)
         
         # Define the destination points for the transformation
         dst_points = np.array([
@@ -163,22 +157,13 @@ def detect_and_transform(image_path):
         logger.error(f"Error in document detection: {e}")
         # Return the original image if processing fails
         try:
-            # Try to read the image again
-            backup_image = cv2.imread(image_path)
-            if backup_image is not None:
-                result_image = cv2.cvtColor(backup_image, cv2.COLOR_BGR2RGB)
+            if 'original' in locals():
+                result_image = cv2.cvtColor(original, cv2.COLOR_BGR2RGB)
                 return Image.fromarray(result_image)
             else:
                 return Image.open(image_path)
-        except Exception as e:
-            logger.error(f"Error converting image: {e}")
-            # If conversion fails, try to directly open the original file
-            try:
-                return Image.open(image_path)
-            except Exception as e:
-                logger.error(f"Error opening image: {e}")
-                # Create a blank image as a last resort
-                return Image.new('RGB', (800, 1100), color='white')
+        except:
+            return Image.open(image_path)
 
 def enhance_image(image):
     """
@@ -191,21 +176,34 @@ def enhance_image(image):
         Enhanced PIL Image
     """
     try:
-        # Apply a series of image enhancements
+        # Convert to grayscale if not already
+        if image.mode != 'L':
+            image = image.convert('L')
         
-        # 1. Increase contrast
+        # Increase contrast
         enhancer = ImageEnhance.Contrast(image)
-        image = enhancer.enhance(1.3)
-        
-        # 2. Increase sharpness
-        enhancer = ImageEnhance.Sharpness(image)
         image = enhancer.enhance(1.5)
         
-        # 3. Adjust brightness
-        enhancer = ImageEnhance.Brightness(image)
-        image = enhancer.enhance(1.1)
+        # Increase sharpness
+        enhancer = ImageEnhance.Sharpness(image)
+        image = enhancer.enhance(1.3)
         
-        return image
+        # Convert to numpy array for OpenCV processing
+        img_array = np.array(image)
+        
+        # Apply bilateral filter to reduce noise while preserving edges
+        bilateral = cv2.bilateralFilter(img_array, 9, 75, 75)
+        
+        # Apply adaptive thresholding for the "scanned" look
+        thresh = cv2.adaptiveThreshold(
+            bilateral, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+            cv2.THRESH_BINARY, 11, 2
+        )
+        
+        # Convert back to PIL Image
+        return Image.fromarray(thresh)
+        
     except Exception as e:
-        logger.error(f"Error enhancing image: {e}")
+        logger.error(f"Error in image enhancement: {e}")
+        # Return the original image if enhancement fails
         return image

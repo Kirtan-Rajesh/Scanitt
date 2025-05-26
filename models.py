@@ -1,47 +1,26 @@
-from datetime import datetime
-from app import db
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
+# This file would contain database models if using SQLAlchemy
+# Since we're using a JSON file for simplicity, this is a placeholder
 
-class User(UserMixin, db.Model):
-    """User model for authentication"""
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationship - a user can have many documents
-    documents = db.relationship('Document', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
-    
-    def set_password(self, password):
-        """Create hashed password."""
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        """Check if password is correct."""
-        return check_password_hash(self.password_hash, password)
-    
-    def __repr__(self):
-        return f'<User {self.username}>'
+class Document:
+    """
+    Document model representing a scanned document.
+    This is a placeholder for a database model if we migrated to SQLAlchemy.
+    """
+    def __init__(self, id, original_filename, filename, processed_filename, 
+                 original_path, processed_path, text, category, tags, summary,
+                 date_uploaded):
+        self.id = id
+        self.original_filename = original_filename
+        self.filename = filename
+        self.processed_filename = processed_filename
+        self.original_path = original_path
+        self.processed_path = processed_path
+        self.text = text
+        self.category = category
+        self.tags = tags
+        self.summary = summary
+        self.date_uploaded = date_uploaded
 
-class Document(db.Model):
-    """Document model representing a scanned document."""
-    id = db.Column(db.String(36), primary_key=True)
-    original_filename = db.Column(db.String(255), nullable=False)
-    filename = db.Column(db.String(255), nullable=False)
-    processed_filename = db.Column(db.String(255), nullable=False)
-    original_path = db.Column(db.String(255), nullable=False)
-    processed_path = db.Column(db.String(255), nullable=False)
-    text = db.Column(db.Text, nullable=True)
-    category = db.Column(db.String(50), nullable=True)
-    tags = db.Column(db.JSON, default=list)
-    summary = db.Column(db.Text, nullable=True)
-    date_uploaded = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Foreign key - document belongs to a user
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
     def to_dict(self):
         """Convert object to dictionary for JSON serialization"""
         return {
@@ -55,9 +34,22 @@ class Document(db.Model):
             'category': self.category,
             'tags': self.tags,
             'summary': self.summary,
-            'date_uploaded': self.date_uploaded.isoformat(),
-            'user_id': self.user_id
+            'date_uploaded': self.date_uploaded
         }
-        
-    def __repr__(self):
-        return f'<Document {self.original_filename}>'
+    
+    @classmethod
+    def from_dict(cls, data):
+        """Create object from dictionary"""
+        return cls(
+            id=data.get('id'),
+            original_filename=data.get('original_filename'),
+            filename=data.get('filename'),
+            processed_filename=data.get('processed_filename'),
+            original_path=data.get('original_path'),
+            processed_path=data.get('processed_path'),
+            text=data.get('text'),
+            category=data.get('category'),
+            tags=data.get('tags'),
+            summary=data.get('summary'),
+            date_uploaded=data.get('date_uploaded')
+        )

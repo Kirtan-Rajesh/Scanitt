@@ -451,9 +451,18 @@ function applySelectedFilter() {
         case 'contrast':
             documentImage.style.filter = 'contrast(1.8) brightness(0.9)';
             break;
+        case 'photo':
+            documentImage.style.filter = 'saturate(1.2) brightness(1.1)';
+            break;
     }
     
-    showAlert(`Applied '${getFilterName(currentFilter)}' filter to document`, 'success');
+    showAlert(`Applied '${getFilterName(currentFilter)}' filter to ${isPhotoDocument() ? 'photo' : 'document'}`, 'success');
+}
+
+// Helper function to determine if current document is a photo (no text)
+function isPhotoDocument() {
+    const textElement = document.getElementById('document-text');
+    return textElement && (textElement.textContent.trim() === 'No text extracted.' || textElement.textContent.trim() === '');
 }
 
 /**

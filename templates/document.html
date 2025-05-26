@@ -2,152 +2,228 @@
 
 {% block title %}{{ document.original_filename }} - Scanitt{% endblock %}
 
+{% block head %}
+<style>
+    /* Custom styles for document viewer */
+    .document-viewer {
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        text-align: center;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #document-image {
+        max-height: 70vh;
+        max-width: 100%;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        background-color: white;
+    }
+    
+    .document-controls {
+        margin-top: 1rem;
+        padding: 0.5rem;
+        background-color: rgba(0,0,0,0.03);
+        border-radius: 0.375rem;
+    }
+    
+    /* Cropper.js styles */
+    .cropper-container {
+        max-height: 500px;
+    }
+    
+    /* Document info sidebar */
+    .document-info {
+        position: sticky;
+        top: 1rem;
+    }
+    
+    .document-tags .badge {
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Tab content */
+    .tab-content {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        padding: 1rem;
+    }
+    
+    /* Text view */
+    .document-text {
+        white-space: pre-wrap;
+        font-family: var(--bs-font-monospace);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ document.original_filename }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 class="h3 mb-0">{{ document.original_filename }}</h1>
+                <div>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="row">
-        <div class="col-lg-8">
-            <!-- Document Viewer -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0">Document Viewer</h5>
+        <div class="col-md-8 mb-4 mb-md-0">
+            <!-- Document tabs -->
+            <ul class="nav nav-tabs" id="documentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-view" type="button" role="tab" aria-controls="image-view" aria-selected="true">
+                        <i class="far fa-file-image me-1"></i> Image View
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-view" type="button" role="tab" aria-controls="text-view" aria-selected="false">
+                        <i class="far fa-file-alt me-1"></i> Text View
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="documentTabContent">
+                <!-- Image View -->
+                <div class="tab-pane fade show active" id="image-view" role="tabpanel" aria-labelledby="image-tab">
+                    <div class="document-viewer mb-4">
+                        {% if document.text and document.text.strip() %}
+                        <img id="document-image" src="{{ document.processed_path }}" alt="{{ document.original_filename }}" class="img-fluid">
+                        {% else %}
+                        <img id="document-image" src="{{ document.original_path }}" alt="{{ document.original_filename }}" class="img-fluid">
+                        {% endif %}
+                    </div>
+                    <div class="document-controls d-flex justify-content-center mb-4">
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" id="viewOriginal">Original</button>
-                            <button class="btn btn-sm btn-outline-primary active" id="viewProcessed">Processed</button>
-                            <button class="btn btn-sm btn-outline-primary" id="viewText">Text</button>
+                            <button type="button" class="btn btn-outline-primary" id="filter-button">
+                                <i class="fas fa-photo-video me-1"></i> Filters
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="enhance-button">
+                                <i class="fas fa-magic me-1"></i> Enhance
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="crop-button">
+                                <i class="fas fa-crop-alt me-1"></i> Crop
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group ms-auto">
+                            <button type="button" class="btn btn-outline-secondary" id="rotate-left">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="rotate-right">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <a href="{{ url_for('static', filename=document.processed_path.replace('static/', '')) }}" download="{{ document.original_filename }}" class="btn btn-outline-success">
+                                <i class="fas fa-download me-1"></i> Download
+                            </a>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <!-- Document Controls -->
-                    <div class="document-controls p-3 border-bottom">
-                        <div class="row align-items-center">
-                            <div class="col-md-6 mb-3 mb-md-0">
-                                <div class="btn-group me-2">
-                                    <button class="btn btn-outline-secondary btn-sm" id="zoomOut">
-                                        <i class="fas fa-search-minus"></i>
-                                    </button>
-                                    <button class="btn btn-outline-secondary btn-sm" id="zoomReset">100%</button>
-                                    <button class="btn btn-outline-secondary btn-sm" id="zoomIn">
-                                        <i class="fas fa-search-plus"></i>
-                                    </button>
-                                </div>
-                                <div class="btn-group">
-                                    <button class="btn btn-outline-secondary btn-sm" id="rotateLeft">
-                                        <i class="fas fa-undo"></i>
-                                    </button>
-                                    <button class="btn btn-outline-secondary btn-sm" id="rotateRight">
-                                        <i class="fas fa-redo"></i>
-                                    </button>
-                                </div>
+                
+                <!-- Text View -->
+                <div class="tab-pane fade" id="text-view" role="tabpanel" aria-labelledby="text-tab">
+                    <div class="document-text p-3 border rounded bg-light">
+                        {% if document.text %}
+                            {{ document.text }}
+                        {% else %}
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i> No text content available for this document.
                             </div>
-                            <div class="col-md-6 text-md-end">
-                                <div class="btn-group">
-                                    <button class="btn btn-outline-primary btn-sm" id="downloadBtn">
-                                        <i class="fas fa-download me-1"></i> Download
-                                    </button>
-                                    <button class="btn btn-outline-primary btn-sm" id="printBtn">
-                                        <i class="fas fa-print me-1"></i> Print
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        {% endif %}
                     </div>
                     
-                    <!-- Document Display -->
-                    <div class="document-display">
-                        <div id="imageView" class="zoom-container">
-                            <div class="text-center">
-                                <img id="documentImage" src="{{ url_for('static', filename=document.processed_path.replace('static/', '')) }}" 
-                                     class="document-image img-fluid" alt="{{ document.original_filename }}">
-                            </div>
-                        </div>
-                        <div id="textView" class="document-text" style="display: none;">
-                            <pre>{{ document.text }}</pre>
-                        </div>
+                    <div class="mt-3">
+                        <button class="btn btn-sm btn-outline-primary" id="copy-text-btn">
+                            <i class="far fa-copy me-1"></i> Copy All Text
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-lg-4">
-            <!-- Document Information -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent">
-                    <h5 class="mb-0">Document Information</h5>
+        <div class="col-md-4">
+            <div class="card document-info">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Document Information</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label text-muted small">Filename</label>
-                        <p class="mb-0 fw-medium">{{ document.original_filename }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Upload Date</label>
-                        <p class="mb-0">{{ document.date_uploaded.strftime('%B %d, %Y at %H:%M') }}</p>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Category</label>
-                        <form method="POST" action="{{ url_for('update_category', document_id=document.id) }}" 
-                              class="d-flex align-items-center">
-                            <select name="category" class="form-select form-select-sm" style="max-width: 200px;">
-                                <option value="">Select category</option>
-                                <option value="Receipt" {% if document.category == 'Receipt' %}selected{% endif %}>Receipt</option>
-                                <option value="Invoice" {% if document.category == 'Invoice' %}selected{% endif %}>Invoice</option>
-                                <option value="ID" {% if document.category == 'ID' %}selected{% endif %}>ID</option>
-                                <option value="Medical" {% if document.category == 'Medical' %}selected{% endif %}>Medical</option>
-                                <option value="Legal" {% if document.category == 'Legal' %}selected{% endif %}>Legal</option>
-                                <option value="Note" {% if document.category == 'Note' %}selected{% endif %}>Note</option>
-                                <option value="Document" {% if document.category == 'Document' %}selected{% endif %}>Document</option>
-                                <option value="Other" {% if document.category and document.category not in ['Receipt', 'Invoice', 'ID', 'Medical', 'Legal', 'Note', 'Document'] %}selected{% endif %}>Other</option>
-                            </select>
-                            <button type="submit" class="btn btn-sm btn-primary ms-2">
-                                <i class="fas fa-save"></i>
-                            </button>
-                        </form>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label text-muted small">Tags</label>
+                        <label class="form-label text-muted">Category</label>
                         <div>
-                            {% if document.tags %}
-                            {% for tag in document.tags %}
-                            <span class="badge bg-light text-dark tag-badge">{{ tag }}</span>
-                            {% endfor %}
-                            {% else %}
-                            <p class="text-muted mb-0 small">No tags assigned</p>
-                            {% endif %}
+                            <span class="badge 
+                                {% if document.category == 'Receipt' %}bg-success
+                                {% elif document.category == 'Invoice' %}bg-info
+                                {% elif document.category == 'ID' %}bg-warning
+                                {% elif document.category == 'Medical' %}bg-danger
+                                {% elif document.category == 'Legal' %}bg-dark
+                                {% elif document.category == 'Note' %}bg-secondary
+                                {% else %}bg-primary{% endif %} p-2">
+                                <i class="fas 
+                                {% if document.category == 'Receipt' %}fa-receipt
+                                {% elif document.category == 'Invoice' %}fa-file-invoice-dollar
+                                {% elif document.category == 'ID' %}fa-id-card
+                                {% elif document.category == 'Medical' %}fa-notes-medical
+                                {% elif document.category == 'Legal' %}fa-gavel
+                                {% elif document.category == 'Note' %}fa-sticky-note
+                                {% else %}fa-file-alt{% endif %} me-1"></i>
+                                {{ document.category }}
+                            </span>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            {% if document.summary %}
-            <!-- Document Summary -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent">
-                    <h5 class="mb-0">Summary</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-0">{{ document.summary }}</p>
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- Actions -->
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-transparent">
-                    <h5 class="mb-0">Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
-                        </a>
-                        <button type="button" class="btn btn-danger" 
-                                onclick="confirmDelete('{{ document.id }}', '{{ document.original_filename }}')">
-                            <i class="fas fa-trash-alt me-2"></i> Delete Document
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Date Uploaded</label>
+                        <p class="mb-0">{{ document.date_uploaded.strftime('%B %d, %Y') }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Tags</label>
+                        <div class="document-tags">
+                            {% for tag in document.tags %}
+                                <span class="badge bg-secondary">{{ tag }}</span>
+                            {% else %}
+                                <span class="text-muted fst-italic">No tags</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Summary</label>
+                        <p class="mb-0 small">{{ document.summary|default('No summary available.', true) }}</p>
+                    </div>
+                    
+                    <!-- Document actions -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateCategoryModal">
+                            <i class="fas fa-edit me-1"></i> Edit Category
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteDocumentModal">
+                            <i class="fas fa-trash-alt me-1"></i> Delete Document
                         </button>
                     </div>
                 </div>
@@ -156,20 +232,55 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<!-- Update Category Modal -->
+<div class="modal fade" id="updateCategoryModal" tabindex="-1" aria-labelledby="updateCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <h5 class="modal-title" id="updateCategoryModalLabel">Update Category</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to delete <span id="documentName" class="fw-bold"></span>? This action cannot be undone.
+                <form id="updateCategoryForm" action="{{ url_for('update_category', document_id=document.id) }}" method="post">
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Document Category</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="Receipt" {% if document.category == 'Receipt' %}selected{% endif %}>Receipt</option>
+                            <option value="Invoice" {% if document.category == 'Invoice' %}selected{% endif %}>Invoice</option>
+                            <option value="ID" {% if document.category == 'ID' %}selected{% endif %}>ID Document</option>
+                            <option value="Medical" {% if document.category == 'Medical' %}selected{% endif %}>Medical Record</option>
+                            <option value="Legal" {% if document.category == 'Legal' %}selected{% endif %}>Legal Document</option>
+                            <option value="Note" {% if document.category == 'Note' %}selected{% endif %}>Note</option>
+                            <option value="Other" {% if document.category == 'Other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" id="deleteButton" class="btn btn-danger">Delete</a>
+                <button type="button" class="btn btn-primary" id="submitCategoryUpdate">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Document Modal -->
+<div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteDocumentModalLabel">Delete Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this document? This action cannot be undone.</p>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i> This will permanently remove <strong>{{ document.original_filename }}</strong> from your documents.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{{ url_for('delete_document', document_id=document.id) }}" class="btn btn-danger">Delete Document</a>
             </div>
         </div>
     </div>
@@ -178,153 +289,51 @@
 
 {% block scripts %}
 <script>
-    // Variables for tracking zoom and rotation
-    let currentZoom = 1;
-    let currentRotation = 0;
-    let currentView = 'processed';
-    
-    // Original and processed image paths
-    const originalPath = "{{ url_for('static', filename=document.original_path.replace('static/', '')) }}";
-    const processedPath = "{{ url_for('static', filename=document.processed_path.replace('static/', '')) }}";
-    
-    // Elements
-    const documentImage = document.getElementById('documentImage');
-    const imageView = document.getElementById('imageView');
-    const textView = document.getElementById('textView');
-    
-    // View selection buttons
-    const viewOriginal = document.getElementById('viewOriginal');
-    const viewProcessed = document.getElementById('viewProcessed');
-    const viewText = document.getElementById('viewText');
-    
-    // Zoom controls
-    const zoomIn = document.getElementById('zoomIn');
-    const zoomOut = document.getElementById('zoomOut');
-    const zoomReset = document.getElementById('zoomReset');
-    
-    // Rotation controls
-    const rotateLeft = document.getElementById('rotateLeft');
-    const rotateRight = document.getElementById('rotateRight');
-    
-    // Utility functions
-    function updateDocumentTransform() {
-        documentImage.style.transform = `scale(${currentZoom}) rotate(${currentRotation}deg)`;
-    }
-    
-    function resetTransform() {
-        currentZoom = 1;
-        currentRotation = 0;
-        updateDocumentTransform();
-        zoomReset.textContent = '100%';
-    }
-    
-    // Zoom controls
-    zoomIn.addEventListener('click', () => {
-        currentZoom += 0.1;
-        if (currentZoom > 3) currentZoom = 3;
-        zoomReset.textContent = `${Math.round(currentZoom * 100)}%`;
-        updateDocumentTransform();
-    });
-    
-    zoomOut.addEventListener('click', () => {
-        currentZoom -= 0.1;
-        if (currentZoom < 0.5) currentZoom = 0.5;
-        zoomReset.textContent = `${Math.round(currentZoom * 100)}%`;
-        updateDocumentTransform();
-    });
-    
-    zoomReset.addEventListener('click', () => {
-        resetTransform();
-    });
-    
-    // Rotation controls
-    rotateLeft.addEventListener('click', () => {
-        currentRotation = (currentRotation - 90) % 360;
-        updateDocumentTransform();
-    });
-    
-    rotateRight.addEventListener('click', () => {
-        currentRotation = (currentRotation + 90) % 360;
-        updateDocumentTransform();
-    });
-    
-    // View switching
-    viewOriginal.addEventListener('click', () => {
-        imageView.style.display = 'block';
-        textView.style.display = 'none';
-        documentImage.src = originalPath;
-        resetTransform();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize document viewer
+        initDocumentViewer();
         
-        viewOriginal.classList.add('active');
-        viewProcessed.classList.remove('active');
-        viewText.classList.remove('active');
-        currentView = 'original';
-    });
-    
-    viewProcessed.addEventListener('click', () => {
-        imageView.style.display = 'block';
-        textView.style.display = 'none';
-        documentImage.src = processedPath;
-        resetTransform();
+        // Handle copy text button
+        const copyTextBtn = document.getElementById('copy-text-btn');
+        if (copyTextBtn) {
+            copyTextBtn.addEventListener('click', function() {
+                const textContent = document.querySelector('.document-text').innerText;
+                navigator.clipboard.writeText(textContent).then(function() {
+                    showAlert('Text copied to clipboard!', 'success');
+                }).catch(function() {
+                    showAlert('Failed to copy text. Please try again.', 'danger');
+                });
+            });
+        }
         
-        viewOriginal.classList.remove('active');
-        viewProcessed.classList.add('active');
-        viewText.classList.remove('active');
-        currentView = 'processed';
-    });
-    
-    viewText.addEventListener('click', () => {
-        imageView.style.display = 'none';
-        textView.style.display = 'block';
+        // Handle category update submission
+        const submitCategoryBtn = document.getElementById('submitCategoryUpdate');
+        if (submitCategoryBtn) {
+            submitCategoryBtn.addEventListener('click', function() {
+                const updateForm = document.getElementById('updateCategoryForm');
+                if (updateForm) {
+                    updateForm.submit();
+                }
+            });
+        }
         
-        viewOriginal.classList.remove('active');
-        viewProcessed.classList.remove('active');
-        viewText.classList.add('active');
-        currentView = 'text';
-    });
-    
-    // Download button
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-        const downloadLink = document.createElement('a');
-        downloadLink.href = currentView === 'original' ? originalPath : processedPath;
-        downloadLink.download = '{{ document.original_filename }}';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    });
-    
-    // Print button
-    document.getElementById('printBtn').addEventListener('click', () => {
-        if (currentView === 'text') {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Print Document Text</title>');
-            printWindow.document.write('<style>body { font-family: monospace; white-space: pre-wrap; }</style>');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write(document.getElementById('textView').innerText);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        } else {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Print Document</title>');
-            printWindow.document.write('<style>body { display: flex; justify-content: center; }</style>');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write(`<img src="${currentView === 'original' ? originalPath : processedPath}" style="max-width: 100%;">`);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
+        // Handle rotate buttons
+        let rotation = 0;
+        const documentImage = document.getElementById('document-image');
+        const rotateLeft = document.getElementById('rotate-left');
+        const rotateRight = document.getElementById('rotate-right');
+        
+        if (rotateLeft && rotateRight && documentImage) {
+            rotateLeft.addEventListener('click', function() {
+                rotation -= 90;
+                documentImage.style.transform = `rotate(${rotation}deg)`;
+            });
+            
+            rotateRight.addEventListener('click', function() {
+                rotation += 90;
+                documentImage.style.transform = `rotate(${rotation}deg)`;
+            });
         }
     });
-    
-    // Delete confirmation
-    function confirmDelete(documentId, documentName) {
-        document.getElementById('documentName').textContent = documentName;
-        document.getElementById('deleteButton').href = "{{ url_for('delete_document', document_id='') }}" + documentId;
-        new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    }
 </script>
 {% endblock %}

@@ -1,65 +1,62 @@
 {% extends 'layout.html' %}
 
-{% block title %}Scanitt - Smart Document Scanner & Organizer{% endblock %}
+{% block title %}Scanitt - Smart Document Scanner & AI Organizer{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="container text-center">
-        <h1 class="display-4 fw-bold mb-4">Smart Document Scanner & Organizer</h1>
-        <p class="lead mb-5">Transform your physical documents into organized digital files with AI-powered categorization, text extraction, and smart search capabilities.</p>
-        <div>
-            {% if current_user.is_authenticated %}
-            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg me-2">
-                <i class="fas fa-th-large me-2"></i> Go to Dashboard
-            </a>
-            {% else %}
-            <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg me-2">
-                <i class="fas fa-user-plus me-2"></i> Sign Up
-            </a>
-            <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
-                <i class="fas fa-sign-in-alt me-2"></i> Login
-            </a>
-            {% endif %}
+<section class="hero py-5 text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Transform Your Documents with AI-Powered Scanning</h1>
+                <p class="lead mb-4">Scanitt automatically detects, enhances, and categorizes your documents using advanced computer vision and AI technology.</p>
+                <a href="#upload-section" class="btn btn-light btn-lg px-4 me-sm-3 fw-bold">
+                    <i class="fas fa-file-upload me-2"></i> Scan Document
+                </a>
+                <a href="/dashboard" class="btn btn-outline-light btn-lg px-4">
+                    <i class="fas fa-th-large me-2"></i> View Dashboard
+                </a>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="../static/img/scanitt.png" alt="Document Scanning" class="img-fluid rounded shadow" style="max-width: 80%; height: auto;">
+            </div>
         </div>
     </div>
 </section>
 
-<!-- Features Section -->
-<section class="py-5 bg-body-tertiary">
+<section class="features py-5 bg-light">
     <div class="container">
-        <h2 class="text-center mb-5">Smart Features</h2>
+        <h2 class="text-center mb-5 fw-bold" style="color:rgb(24, 51, 199);">Smart Document Processing</h2>
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="card-icon">
                             <i class="fas fa-crop-alt"></i>
                         </div>
-                        <h5 class="card-title">Auto Detection & Crop</h5>
-                        <p class="card-text text-muted">Smart algorithms automatically detect document edges and apply perspective correction for perfect scans.</p>
+                        <h5 class="card-title">Auto-Detection & Correction</h5>
+                        <p class="card-text">Our advanced computer vision algorithms automatically detect document edges and correct perspective distortion.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-font"></i>
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="card-icon">
+                            <i class="fas fa-file-alt"></i>
                         </div>
-                        <h5 class="card-title">Text Recognition (OCR)</h5>
-                        <p class="card-text text-muted">Extract text from your documents using advanced OCR technology, making them searchable and editable.</p>
+                        <h5 class="card-title">Text Extraction</h5>
+                        <p class="card-text">Extract and digitize text from any document using our powerful OCR technology, making your documents searchable.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="feature-icon">
+                <div class="card feature-card h-100">
+                    <div class="card-body text-center">
+                        <div class="card-icon">
                             <i class="fas fa-brain"></i>
                         </div>
                         <h5 class="card-title">AI Categorization</h5>
-                        <p class="card-text text-muted">AI-powered categorization automatically labels your documents and extracts relevant information.</p>
+                        <p class="card-text">Our AI automatically analyzes and categorizes your documents, organizing them into logical groups.</p>
                     </div>
                 </div>
             </div>
@@ -67,70 +64,190 @@
     </div>
 </section>
 
-<!-- How It Works Section -->
-<section class="py-5">
+<section id="upload-section" class="py-5">
     <div class="container">
-        <h2 class="text-center mb-5">How It Works</h2>
-        <div class="row align-items-center g-5">
-            <div class="col-md-6 order-md-2">
-                <img src="/static/img/hero-image.png" alt="Document Scanning Demo" class="img-fluid rounded shadow-lg">
+        <div class="row">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="mb-4">Scan Your Document</h2>
+                <p class="mb-4">Upload an image of any document - receipt, invoice, ID card, medical form, or handwritten note. Our system will process it automatically.</p>
+                
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="document-file" class="form-label">Choose a document image</label>
+                        <input class="form-control form-control-lg" id="document-file" name="document" type="file" accept="image/png, image/jpeg, image/jpg">
+                    </div>
+                    
+                    <div id="image-preview-container" class="mb-4 d-none">
+                        <label class="form-label">Preview</label>
+                        <div class="text-center">
+                            <img id="image-preview" src="#" alt="Document preview" class="img-fluid rounded">
+                        </div>
+                    </div>
+                    
+                    <div id="progress-container" class="mb-3 d-none">
+                        <label id="upload-status" class="form-label">Uploading...</label>
+                        <div class="progress">
+                            <div id="upload-progress" class="progress-bar progress-bar-striped progress-bar-animated"
+                                role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="upload-button" type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i> Process Document
+                    </button>
+                </form>
             </div>
-            <div class="col-md-6 order-md-1">
-                <div class="d-flex mb-4">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
-                        <span class="fw-bold">1</span>
+            
+            <div class="col-lg-6">
+                <div id="results-container" class="d-none">
+                    <h3 class="mb-3">Processed Document</h3>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button id="image-tab" class="nav-link active" data-bs-toggle="tab" data-bs-target="#image-view" 
+                                        type="button" role="tab" aria-controls="image-view" aria-selected="true">
+                                        <i class="fas fa-image me-2"></i> Document
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button id="text-tab" class="nav-link" data-bs-toggle="tab" data-bs-target="#text-view" 
+                                        type="button" role="tab" aria-controls="text-view" aria-selected="false">
+                                        <i class="fas fa-file-alt me-2"></i> Text
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <div class="tab-content">
+                                <div id="image-view" class="tab-pane fade show active" role="tabpanel" aria-labelledby="image-tab">
+                                    <div class="document-viewer mb-3">
+                                        <img id="document-image" src="#" alt="Processed document" class="img-fluid">
+                                    </div>
+                                    <div class="document-controls">
+                                        <button id="zoom-in" class="btn btn-sm btn-outline-primary" title="Zoom In">
+                                            <i class="fas fa-search-plus"></i>
+                                        </button>
+                                        <button id="zoom-out" class="btn btn-sm btn-outline-primary" title="Zoom Out">
+                                            <i class="fas fa-search-minus"></i>
+                                        </button>
+                                        <button id="rotate-left" class="btn btn-sm btn-outline-primary" title="Rotate Left">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                        <button id="rotate-right" class="btn btn-sm btn-outline-primary" title="Rotate Right">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                        <button id="reset-view" class="btn btn-sm btn-outline-primary" title="Reset View">
+                                            <i class="fas fa-sync"></i>
+                                        </button>
+                                        <button id="fullscreen" class="btn btn-sm btn-outline-primary" title="Fullscreen">
+                                            <i class="fas fa-expand"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="text-view" class="tab-pane fade" role="tabpanel" aria-labelledby="text-tab">
+                                    <pre id="document-text" class="document-text">No text extracted.</pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="ms-3">
-                        <h5>Capture Document</h5>
-                        <p class="text-muted">Upload any document image from your device.</p>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Document Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">Document</dt>
+                                <dd class="col-sm-9" id="document-title">-</dd>
+                                
+                                <dt class="col-sm-3">Category</dt>
+                                <dd class="col-sm-9">
+                                    <span id="document-category" class="badge bg-primary">-</span>
+                                </dd>
+                                
+                                <dt class="col-sm-3">Tags</dt>
+                                <dd class="col-sm-9" id="document-tags">-</dd>
+                                
+                                <dt class="col-sm-3">Summary</dt>
+                                <dd class="col-sm-9" id="document-summary">-</dd>
+                            </dl>
+                        </div>
+                        <div class="card-footer">
+                            <div class="btn-group">
+                                <button id="export-pdf" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file-pdf me-1"></i> Export PDF
+                                </button>
+                                <button id="export-image" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file-image me-1"></i> Export Image
+                                </button>
+                                <button id="export-text" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file-alt me-1"></i> Export Text
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="d-flex mb-4">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
-                        <span class="fw-bold">2</span>
+                
+                <div id="upload-info" class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">How It Works</h5>
+                        <ol class="mb-0">
+                            <li class="mb-2">Upload a document image (receipt, invoice, ID, etc.)</li>
+                            <li class="mb-2">Our system detects the document and corrects perspective</li>
+                            <li class="mb-2">Image is enhanced for better readability</li>
+                            <li class="mb-2">OCR extracts text from the document</li>
+                            <li class="mb-2">AI categorizes the document based on content</li>
+                            <li>View, search, and organize your documents in the dashboard</li>
+                        </ol>
                     </div>
-                    <div class="ms-3">
-                        <h5>Automatic Processing</h5>
-                        <p class="text-muted">Our system automatically detects edges, enhances quality, and extracts text.</p>
-                    </div>
-                </div>
-                <div class="d-flex mb-4">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
-                        <span class="fw-bold">3</span>
-                    </div>
-                    <div class="ms-3">
-                        <h5>AI Categorization</h5>
-                        <p class="text-muted">Documents are automatically categorized and tagged for easy organization.</p>
-                    </div>
-                </div>
-                <div class="d-flex">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; min-width: 40px;">
-                        <span class="fw-bold">4</span>
-                    </div>
-                    <div class="ms-3">
-                        <h5>Access Anywhere</h5>
-                        <p class="text-muted">Your documents are securely stored and accessible from any device.</p>
-                    </div>
+                    
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- CTA Section -->
-<section class="py-5 bg-primary text-white">
-    <div class="container text-center">
-        <h2 class="mb-4">Ready to get started?</h2>
-        <p class="lead mb-4">Join thousands of users who are already organizing their documents with Scanitt.</p>
-        {% if current_user.is_authenticated %}
-        <a href="{{ url_for('upload_file') }}" class="btn btn-light btn-lg">
-            <i class="fas fa-upload me-2"></i> Upload Your First Document
-        </a>
-        {% else %}
-        <a href="{{ url_for('signup') }}" class="btn btn-light btn-lg">
-            <i class="fas fa-user-plus me-2"></i> Create Free Account
-        </a>
-        {% endif %}
+<section class="testimonials py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">See It In Action</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-img-container">
+                        <img src="../static/img/doc_detection.png" class="card-img-top uniform-img" alt="Document scanning in action">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Document Detection</h5>
+                        <p class="card-text">Our system automatically detects document edges and applies perspective correction.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-img-container">
+                        <img src="../static/img/document_organization.jpeg" class="card-img-top uniform-img" alt="Document organization">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Organized Dashboard</h5>
+                        <p class="card-text">All your documents are neatly categorized and easily searchable.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-img-container">
+                        <img src="../static/img/ai_analysis.webp" class="card-img-top uniform-img" alt="AI analysis">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">AI-Powered Analysis</h5>
+                        <p class="card-text">Advanced AI categorizes your documents based on content type.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 {% endblock %}
