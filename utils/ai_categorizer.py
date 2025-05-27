@@ -4,14 +4,18 @@ import json
 import requests
 from typing import Tuple, List
 import traceback
-
+import os
+from dotenv import load_dotenv
 # Configure logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, 
                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Get API key from environment variable
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+load_dotenv()
+
+# Access your API key
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 def categorize_document(text: str) -> Tuple[str, List[str], str]:
@@ -49,7 +53,7 @@ def categorize_document(text: str) -> Tuple[str, List[str], str]:
         Analyze the following document text and provide:
         1. A primary category (e.g., Receipt, Invoice, ID Card, Medical, Legal, Note, Letter, Form)
         2. A list of relevant tags (3-5 tags)
-        3. A brief summary (2-3 sentences)
+        3. A brief summary (4-6 sentences)
         
         Document text:
         {text}

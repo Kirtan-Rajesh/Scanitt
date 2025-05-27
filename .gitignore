@@ -128,20 +128,32 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+# Environment variables files
 .env
-.venv
-env/
+.env.local
+.env.development
+.env.production
+
+# Config files that might contain API keys
+config.json
+secrets.json
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
+# JavaScript/Node.js specific
+node_modules/
+.npm
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.webassets-cache
 
 # mkdocs documentation
 /site

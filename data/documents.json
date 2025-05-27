@@ -66,20 +66,71 @@
     "date_uploaded": "2025-05-25T21:17:42.254237"
   },
   {
-    "id": "c6590cdc-08a0-41bd-af8c-c4b820b6fcff",
-    "original_filename": "college id.jpg",
-    "filename": "c6590cdc-08a0-41bd-af8c-c4b820b6fcff_college_id.jpg",
-    "processed_filename": "processed_c6590cdc-08a0-41bd-af8c-c4b820b6fcff_college_id.jpg",
-    "original_path": "/static/uploads/c6590cdc-08a0-41bd-af8c-c4b820b6fcff_college_id.jpg",
-    "processed_path": "/static/processed/processed_c6590cdc-08a0-41bd-af8c-c4b820b6fcff_college_id.jpg",
-    "text": "CULENNAL CAMPUS\n\nKirtan Rajesh\n\n21BRS1148",
-    "category": "ID Card",
+    "id": "2804bde1-6476-4383-a126-4b97a04f730d",
+    "original_filename": "Architecture1.png",
+    "filename": "2804bde1-6476-4383-a126-4b97a04f730d_Architecture1.png",
+    "processed_filename": "processed_2804bde1-6476-4383-a126-4b97a04f730d_Architecture1.png",
+    "original_path": "/static/uploads/2804bde1-6476-4383-a126-4b97a04f730d_Architecture1.png",
+    "processed_path": "/static/processed/processed_2804bde1-6476-4383-a126-4b97a04f730d_Architecture1.png",
+    "text": "Optimizing \u2018Air, Pollution Booth\n\nData\\Cleaning\nRemoving noise and [Data]\n\ninconsistencies \u2014_-\nNormalization\n\n\u2018Standardizing data Interpolation\nscales, Environment}\nFilling data\u2019gaps\\ Modelin -\nPEED\nCreating a detailed learning)\n\u2018grid model\n{Training the agent:\n\nfor, optimal\nplacement}",
+    "category": "Technical Document",
     "tags": [
-      "Student ID",
-      "University",
-      "Campus"
+      "Data Science",
+      "Machine Learning",
+      "Environmental"
     ],
-    "summary": "A student ID card issued to Kirtan Rajesh with a unique identifier 21BRS1148 for the Cullenal Campus.",
-    "date_uploaded": "2025-05-26T08:59:22.498557"
+    "summary": "A technical document discussing data cleaning and normalization techniques for optimizing air pollution monitoring, including interpolation and model training.",
+    "date_uploaded": "2025-05-26T11:07:53.140139"
+  },
+  {
+    "id": "35408baa-2228-476a-9122-cf41c3e280c5",
+    "original_filename": "Architecture2.png",
+    "filename": "35408baa-2228-476a-9122-cf41c3e280c5_Architecture2.png",
+    "processed_filename": "processed_35408baa-2228-476a-9122-cf41c3e280c5_Architecture2.png",
+    "original_path": "/static/uploads/35408baa-2228-476a-9122-cf41c3e280c5_Architecture2.png",
+    "processed_path": "/static/processed/processed_35408baa-2228-476a-9122-cf41c3e280c5_Architecture2.png",
+    "text": "Data Refinement\u2019and|Model[Optimization]\n\nFale\nData Cleaning J DRO patton\nStandardizing data\nscales for,uniformity,\n(data)\n\n\u2018Spatial\nInterpolation SF ccogeston\nEstimating data values Combining data fora\nfor,unmonitored areas \u2018comprehensive view,\n\nFt a\n\noro Ett\nCreating a grid] Lbased smite booth\nsmite \u201cthrough\n\nleaming",
+    "category": "Technical Document",
+    "tags": [
+      "Data Refinement",
+      "Data Optimization",
+      "Spatial Interpolation"
+    ],
+    "summary": "The document discusses data refinement and optimization techniques, including data cleaning, standardization, and spatial interpolation for estimating data values in unmonitored areas.",
+    "date_uploaded": "2025-05-26T11:19:42.267275"
+  },
+  {
+    "id": "0e2eef20-fb85-4c33-a5be-d472f320cb78",
+    "original_filename": "Architecture2.png",
+    "filename": "0e2eef20-fb85-4c33-a5be-d472f320cb78_Architecture2.png",
+    "processed_filename": "processed_0e2eef20-fb85-4c33-a5be-d472f320cb78_Architecture2.png",
+    "original_path": "/static/uploads/0e2eef20-fb85-4c33-a5be-d472f320cb78_Architecture2.png",
+    "processed_path": "/static/processed/processed_0e2eef20-fb85-4c33-a5be-d472f320cb78_Architecture2.png",
+    "text": "Data Refinement\u2019and|Model[Optimization]\n\nFale\nData Cleaning J DRO patton\nStandardizing data\nscales for,uniformity,\n(data)\n\n\u2018Spatial\nInterpolation SF ccogeston\nEstimating data values Combining data fora\nfor,unmonitored areas \u2018comprehensive view,\n\nFt a\n\noro Ett\nCreating a grid] Lbased smite booth\nsmite \u201cthrough\n\nleaming",
+    "category": "Technical Document",
+    "tags": [
+      "Data Refinement",
+      "Data Analysis",
+      "Geospatial"
+    ],
+    "summary": "The document discusses data refinement and optimization techniques, including data cleaning, spatial interpolation, and grid-based learning.",
+    "date_uploaded": "2025-05-26T11:28:25.560242"
+  },
+  {
+    "id": "e736878d-bebe-4a6f-945a-ae950ba0bc95",
+    "original_filename": "resnet1d.jpg",
+    "filename": "e736878d-bebe-4a6f-945a-ae950ba0bc95_resnet1d.jpg",
+    "processed_filename": "processed_e736878d-bebe-4a6f-945a-ae950ba0bc95_resnet1d.jpg",
+    "original_path": "/static/uploads/e736878d-bebe-4a6f-945a-ae950ba0bc95_resnet1d.jpg",
+    "processed_path": "/static/processed/processed_e736878d-bebe-4a6f-945a-ae950ba0bc95_resnet1d.jpg",
+    "text": "boss\n\nmodel loss\n\n\u2014 tein\n\n=e\n\n\\\n\n\\",
+    "category": "Note",
+    "tags": [
+      "math",
+      "model",
+      "loss"
+    ],
+    "summary": "A note containing mathematical notation related to a model's loss.",
+    "date_uploaded": "2025-05-26T21:38:27.797338"
   }
 ]
