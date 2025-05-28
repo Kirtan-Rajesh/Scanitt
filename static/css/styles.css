@@ -368,3 +368,42 @@ footer a:hover {
   object-fit: cover;  /* This maintains aspect ratio while filling the container */
 }
 
+#crop-overlay {
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.crop-handle {
+    pointer-events: auto;
+    z-index: 1001;
+}
+
+
+#corner-markers-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.modal-body .text-center {
+  position: relative;
+}
+
+.corner-marker {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: red;
+  border: 2px solid white;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.document-viewer {
+  position: relative;
+}

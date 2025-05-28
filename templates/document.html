@@ -115,6 +115,7 @@
                         <img id="document-image" src="{{ document.original_path }}" alt="{{ document.original_filename }}" class="img-fluid">
                         {% endif %}
                     </div>
+                    <!-- Find this section in the document controls div -->
                     <div class="document-controls d-flex justify-content-center mb-4">
                         <div class="btn-group">
                             <button type="button" class="btn btn-outline-primary" id="filter-button">
@@ -125,6 +126,12 @@
                             </button>
                             <button type="button" class="btn btn-outline-primary" id="crop-button">
                                 <i class="fas fa-crop-alt me-1"></i> Crop
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="detect-edges-button">
+                                <i class="fas fa-border-style me-1"></i> Detect Edges
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" id="auto-crop-button">
+                                <i class="fas fa-cut me-1"></i> Auto Crop
                             </button>
                         </div>
                         
@@ -285,6 +292,28 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+<!-- Add this style in the head section -->
+{% block style%}
+<style>
+    .corner-marker {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: red;
+        border: 2px solid white;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 1000;
+    }
+    
+    .document-viewer {
+        position: relative;
+        overflow: hidden;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
