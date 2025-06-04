@@ -10,184 +10,224 @@ from datetime import datetime
 from utils.document_processor import detect_and_transform, enhance_image
 from utils.ocr import extract_text
 from utils.ai_categorizer import categorize_document
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from models import db, User, Document
+import os
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "scanitt-dev-secret")
+app.config['SECRET_KEY'] = 'your-secret-key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scanitt.db'  # Use PostgreSQL in production
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
+app.config['PROCESSED_FOLDER'] = os.path.join('static', 'processed')
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'tiff'}
 
-# Configuration
-UPLOAD_FOLDER = 'static/uploads'
-PROCESSED_FOLDER = 'static/processed'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-DOCUMENTS_DB = 'data/documents.json'
+# Add SQLAlchemy engine options for connection pooling
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,  # Number of connections to keep open in the pool
+    'max_overflow': 20, # Number of connections that can be created beyond pool_size
+    'pool_timeout': 30 # Seconds to wait for a connection to become available
+}
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(PROCESSED_FOLDER, exist_ok=True)
-os.makedirs('data', exist_ok=True)
+# Initialize database
+db.init_app(app)
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
+# Create tables within app context
+with app.app_context():
+    db.create_all()
 
-logger = logging.getLogger(__name__)
+# Initialize login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+
+# Routes for authentication
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        
+        # Check if user exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists', 'danger')
+            return redirect(url_for('register'))
+            
+        # Create new user
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('login'))
+        
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password', 'danger')
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def get_documents():
-    try:
-        if os.path.exists(DOCUMENTS_DB):
-            with open(DOCUMENTS_DB, 'r') as f:
-                return json.load(f)
-        return []
-    except Exception as e:
-        logger.error(f"Error loading documents: {e}")
-        return []
-
-def save_documents(documents):
-    try:
-        with open(DOCUMENTS_DB, 'w') as f:
-            json.dump(documents, f, indent=2)
-    except Exception as e:
-        logger.error(f"Error saving documents: {e}")
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    documents = get_documents()
-    # Group documents by category
+    # Get documents for the current user only
+    documents = Document.query.filter_by(user_id=current_user.id).all()
+    
+    # Organize documents by category
     categories = {}
     for doc in documents:
-        cat = doc.get('category', 'Uncategorized')
-        if cat not in categories:
-            categories[cat] = []
-        categories[cat].append(doc)
+        category = doc.category or "Uncategorized"
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(doc)
     
-    return render_template('dashboard.html', categories=categories, documents=documents)
+    return render_template('dashboard.html', documents=documents, categories=categories)
 
 @app.route('/upload', methods=['POST'])
-def upload_file():
+@login_required
+def upload_document():
     if 'document' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
-    
-    file = request.files['document']
-    
-    if file.filename == '':
-        flash('No selected file')
-        return redirect(request.url)
-    
-    if file and allowed_file(file.filename):
-        # Generate unique filename
-        unique_id = str(uuid.uuid4())
-        filename = unique_id + '_' + secure_filename(file.filename)
-        original_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(original_path)
+        return jsonify({'success': False, 'error': 'No file part'}), 400
         
+    file = request.files['document']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'}), 400
+        
+    if file and allowed_file(file.filename):
         try:
-            # Process document image
-            logger.debug(f"Processing document: {filename}")
-            transformed_image = detect_and_transform(original_path)
-            enhanced_image = enhance_image(transformed_image)
+            # Generate unique filename
+            filename = str(uuid.uuid4()) + '_' + secure_filename(file.filename)
             
-            # Save processed image
-            processed_filename = f"processed_{filename}"
-            processed_path = os.path.join(app.config['PROCESSED_FOLDER'], processed_filename)
-            enhanced_image.save(processed_path)
+            # Create user-specific upload directory if it doesn't exist
+            user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(current_user.id))
+            user_processed_dir = os.path.join(app.config['PROCESSED_FOLDER'], str(current_user.id))
             
-            # Extract text using OCR
-            text = extract_text(processed_path)
+            os.makedirs(user_upload_dir, exist_ok=True)
+            os.makedirs(user_processed_dir, exist_ok=True)
             
-            # Categorize document using AI
-            category, tags, summary = categorize_document(text)
+            # Save original file
+            original_path = os.path.join(user_upload_dir, filename).replace('\\', '/')
+            file.save(original_path)
             
-            # Save document metadata
-            document = {
-                'id': unique_id,
-                'original_filename': file.filename,
-                'filename': filename,
-                'processed_filename': processed_filename,
-                'original_path': f"/{app.config['UPLOAD_FOLDER']}/{filename}",
-                'processed_path': f"/{app.config['PROCESSED_FOLDER']}/{processed_filename}",
-                'text': text,
-                'category': category,
-                'tags': tags,
-                'summary': summary,
-                'date_uploaded': datetime.now().isoformat()
-            }
+            # Process document
+            processed_path = os.path.join(user_processed_dir, 'processed_' + filename).replace('\\', '/')
+            processed_image = detect_and_transform(original_path)
+            processed_image.save(processed_path)
             
-            documents = get_documents()
-            documents.append(document)
-            save_documents(documents)
+            # Extract text with OCR
+            text_content = extract_text(processed_path)
             
-            return jsonify({
-                'success': True,
-                'document': document
-            })
+            # Categorize document - this returns a tuple (category, tags, summary)
+            category_info = categorize_document(text_content)
             
+            # Unpack the tuple
+            category_name, tags_list, summary = category_info
+            
+            # Convert tags list to string for storage
+            tags_string = ",".join(tags_list) if tags_list else None
+            
+            # Save document in database
+            document = Document(
+                filename=filename,
+                original_path=original_path,
+                processed_path=processed_path,
+                text_content=text_content,
+                category=category_name,  # Use just the category name
+                tags=tags_string,        # Store tags as a comma-separated string
+                summary=summary,  # Add this line
+                user_id=current_user.id
+            )
+            
+            db.session.add(document)
+            db.session.commit()
+            
+            return jsonify({'success': True, 'document_id': document.id})
         except Exception as e:
-            logger.error(f"Error processing document: {e}")
-            return jsonify({
-                'success': False,
-                'error': str(e)
-            }), 500
-    
-    return jsonify({
-        'success': False,
-        'error': 'Invalid file type. Please upload a PNG or JPEG image.'
-    }), 400
+            # Log the exception for server-side debugging
+            app.logger.error(f"Error during document upload: {e}")
+            db.session.rollback() # Rollback any pending database changes
+            return jsonify({'success': False, 'error': f'Server error during processing: {str(e)}'}), 500
+    else:
+        return jsonify({'success': False, 'error': 'Invalid file type'}), 400
 
 @app.route('/document/<document_id>')
+@login_required
 def view_document(document_id):
-    documents = get_documents()
-    document = next((doc for doc in documents if doc['id'] == document_id), None)
+    # Ensure the document belongs to the current user
+    document = Document.query.filter_by(id=document_id, user_id=current_user.id).first_or_404()
+    return render_template('document.html', document=document)
     
-    if document:
-        # Convert the ISO date string to a datetime object
-        if 'date_uploaded' in document and isinstance(document['date_uploaded'], str):
-            try:
-                document['date_uploaded'] = datetime.fromisoformat(document['date_uploaded'])
-            except ValueError:
-                # If conversion fails, leave as string
-                pass
-        return render_template('document.html', document=document)
-    else:
-        flash('Document not found')
-        return redirect(url_for('dashboard'))
 
 @app.route('/api/documents')
+@login_required
 def api_documents():
-    documents = get_documents()
-    return jsonify(documents)
+    documents = Document.query.filter_by(user_id=current_user.id).all()
+    return jsonify([{
+        'id': doc.id,
+        'filename': doc.filename,
+        'category': doc.category,
+        'text_content': doc.text_content,
+        'upload_date': doc.upload_date.isoformat(),
+        'tags': doc.tags
+    } for doc in documents])
 
 @app.route('/api/delete/<document_id>', methods=['DELETE'])
+@login_required
 def delete_document(document_id):
-    documents = get_documents()
-    document = next((doc for doc in documents if doc['id'] == document_id), None)
+    document = Document.query.filter_by(id=document_id, user_id=current_user.id).first_or_404()
     
-    if document:
+    try:
         # Remove files
-        try:
-            original_path = os.path.join(app.config['UPLOAD_FOLDER'], document['filename'])
-            processed_path = os.path.join(app.config['PROCESSED_FOLDER'], document['processed_filename'])
+        if os.path.exists(document.original_path):
+            os.remove(document.original_path)
+        if os.path.exists(document.processed_path):
+            os.remove(document.processed_path)
             
-            if os.path.exists(original_path):
-                os.remove(original_path)
-            if os.path.exists(processed_path):
-                os.remove(processed_path)
-        except Exception as e:
-            logger.error(f"Error removing files: {e}")
-        
         # Remove from database
-        documents = [doc for doc in documents if doc['id'] != document_id]
-        save_documents(documents)
+        db.session.delete(document)
+        db.session.commit()
         
         return jsonify({'success': True})
-    
-    return jsonify({'success': False, 'error': 'Document not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/update-category/<document_id>', methods=['POST'])
+@login_required
 def update_category(document_id):
     data = request.json
     new_category = data.get('category')
@@ -195,15 +235,84 @@ def update_category(document_id):
     if not new_category:
         return jsonify({'success': False, 'error': 'No category provided'}), 400
     
-    documents = get_documents()
-    document = next((doc for doc in documents if doc['id'] == document_id), None)
+    document = Document.query.filter_by(id=document_id, user_id=current_user.id).first_or_404()
+    document.category = new_category
+    db.session.commit()
     
-    if document:
-        document['category'] = new_category
-        save_documents(documents)
+    return jsonify({'success': True})
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
+
+# Add this function to create user directories
+def ensure_user_directories(user_id):
+    user_upload_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(user_id))
+    user_processed_dir = os.path.join(app.config['PROCESSED_FOLDER'], str(user_id))
+    
+    os.makedirs(user_upload_dir, exist_ok=True)
+    os.makedirs(user_processed_dir, exist_ok=True)
+    
+    return user_upload_dir, user_processed_dir
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
+
+# Add this route to your app.py file
+
+# Add this import at the top with other imports
+import time
+
+@app.route('/api/save-document/<document_id>', methods=['POST'])
+@login_required
+def save_document(document_id):
+    if 'image' not in request.files:
+        return jsonify({'success': False, 'error': 'No image file provided'})
+    
+    image_file = request.files['image']
+    if not image_file.filename:
+        return jsonify({'success': False, 'error': 'No image file selected'})
+    
+    # Get document and verify ownership
+    document = Document.query.filter_by(id=document_id, user_id=current_user.id).first_or_404()
+    
+
+    processed_dir = os.path.join('static', 'processed', document.id)
+    os.makedirs(processed_dir, exist_ok=True)
+    
+    # Generate a unique filename
+    filename = secure_filename(f"processed_{int(time.time())}.png")
+    filepath = os.path.join(processed_dir, filename)
+    
+    try:
+        # Save the file
+        image_file.save(filepath)
+        
+        # Update document record with relative path for web access
+        document.processed_path = os.path.join('processed', document.id, filename).replace('\\', '/')
+        
+        # Extract new text content from the processed image
+        text_content = extract_text(filepath)
+        if text_content:
+            document.text_content = text_content
+        
+        document.last_modified = datetime.now()
+        db.session.commit()
+        
         return jsonify({'success': True})
-    
-    return jsonify({'success': False, 'error': 'Document not found'}), 404
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error saving document: {str(e)}")
+        return jsonify({'success': False, 'error': 'Error saving document'}), 500
 
 @app.errorhandler(404)
 def page_not_found(e):

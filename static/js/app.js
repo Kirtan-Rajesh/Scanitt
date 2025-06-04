@@ -280,3 +280,15 @@ const uploadForm = document.createElement('form');
 uploadForm.id = 'uploadForm';
 uploadForm.enctype = 'multipart/form-data';
 document.body.appendChild(uploadForm);
+
+// Add logout functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = '/logout';
+        });
+    }
+});

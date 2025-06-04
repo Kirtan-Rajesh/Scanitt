@@ -2,6 +2,29 @@
  * Image Filters and Processing for Scanitt
  * Provides additional image manipulation functionality using OpenCV-like algorithms
  */
+// Global variables for image manipulation
+let originalImage = null;
+let currentFilter = 'none';
+let cropperInstance = null;
+let rotationAngle = 0;
+let imageCache = {}; // For storing processed images
+let hasUnsavedChanges = false; // Add this declaration
+let originalImageSrc = null; // Add this declaration
+let edgeDetectionLevel = 0; // Add this declaration
+
+let isOpenCvReady = false;
+// Global variables for cropping
+let currentCropper = null; // Instance of Cropper.js
+let detectedDocCorners = null; // Stores corners from auto-detection {x, y}
+let isAutoDetecting = false; // Flag for auto-detection mode
+let preCropImageSrc = null; // To store image state before enabling crop mode
+let cropControlsContainer = null;
+let mainImageElement = null; // Initialize as null, will set in DOMContentLoaded
+let currentModalCropper = null;
+let cropModalInstance = null; // <<<<------ THIS IS THE IMPORTANT GLOBAL DECLARATION
+let preCropImageSrcForModal = null;
+let detectedModalCorners = null;
+
 
 function initOpenCV() {
     if (typeof cv === 'undefined') {
@@ -51,26 +74,6 @@ function initOpenCV() {
 initOpenCV();
 
 
-// Global variables for image manipulation
-let originalImage = null;
-let currentFilter = 'none';
-let cropperInstance = null;
-let rotationAngle = 0;
-let imageCache = {}; // For storing processed images
-
-let isOpenCvReady = false;
-// Global variables for cropping
-let currentCropper = null; // Instance of Cropper.js
-let detectedDocCorners = null; // Stores corners from auto-detection {x, y}
-let isAutoDetecting = false; // Flag for auto-detection mode
-let preCropImageSrc = null; // To store image state before enabling crop mode
-let cropControlsContainer = null;
-let mainImageElement = document.getElementById('document-image');
-let currentModalCropper = null;
-let cropModalInstance = null; // <<<<------ THIS IS THE IMPORTANT GLOBAL DECLARATION
-let preCropImageSrcForModal = null;
-let detectedModalCorners = null;
-
 document.addEventListener('DOMContentLoaded', function() {
     mainImageElement = document.getElementById('document-image');
     // Initialize filter buttons
@@ -101,6 +104,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
      // Setup the container for crop action buttons
      setupCropControls();
+
+     // Store original image when page loads
+    if (mainImageElement && mainImageElement.src) {
+        originalImageSrc = mainImageElement.src;
+    }
+    
+    // Add event listener for save button
+    const saveChangesButton = document.getElementById('save-changes-button');
+    if (saveChangesButton) {
+        saveChangesButton.addEventListener('click', saveDocumentChanges);
+    }
+    
+    // Add event listener for back to dashboard link
+    const backToDashboardLinks = document.querySelectorAll('a[href="/dashboard"]');
+    backToDashboardLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                showSaveChangesModal(link.href);
+            }
+        });
+    });
 });
 
 function setupCropControls() {
@@ -165,7 +190,9 @@ async function ensureOpenCVReady(timeoutMs = 7000) { // Increased timeout slight
         }, intervalTime);
     });
 }
-
+function markAsUnsaved() {
+    hasUnsavedChanges = true;
+}
 async function detectDocumentEdges() {
     const mainImage = document.getElementById('document-image');
     if (!mainImage || !mainImage.src) {
@@ -202,8 +229,24 @@ async function detectDocumentEdges() {
         try {
             // Process image
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-            cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
-            cv.Canny(blurred, edged, 50, 150);
+            
+            // Adjust blur and edge detection parameters based on level
+            let blurSize = 5;
+            let cannyLow = 50;
+            let cannyHigh = 150;
+            let approxEpsilon = 0.02;
+            
+            // Adjust parameters based on current level
+            if (edgeDetectionLevel > 0) {
+                // For higher levels, reduce blur and thresholds to detect more edges
+                blurSize = Math.max(3, 5 - edgeDetectionLevel);
+                cannyLow = Math.max(20, 50 - (edgeDetectionLevel * 10));
+                cannyHigh = Math.max(80, 150 - (edgeDetectionLevel * 15));
+                approxEpsilon = Math.max(0.01, 0.02 - (edgeDetectionLevel * 0.003));
+            }
+            
+            cv.GaussianBlur(gray, blurred, new cv.Size(blurSize, blurSize), 0);
+            cv.Canny(blurred, edged, cannyLow, cannyHigh);
             cv.findContours(edged, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
             let maxArea = 0;
@@ -220,7 +263,7 @@ async function detectDocumentEdges() {
 
                 let peri = cv.arcLength(cnt, true);
                 let approx = new cv.Mat();
-                cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+                cv.approxPolyDP(cnt, approx, approxEpsilon * peri, true);
 
                 // Check if we have quadrilateral
                 if (approx.rows === 4 && area > maxArea) {
@@ -257,8 +300,11 @@ async function detectDocumentEdges() {
                 
                 if (corners.length === 4) {
                     displayCornerMarkers(corners, mainImage);
+                    detectedDocCorners = corners;
                     window.detectedCorners = corners;
                     showAlert('Document edges detected!', 'success');
+                    edgeDetectionLevel++;
+                    hasUnsavedChanges = true;
                 } else {
                     showAlert('Failed to extract corner points', 'warning');
                 }
@@ -325,10 +371,180 @@ function clearCornerMarkers() {
     markers.forEach(marker => marker.remove());
 }
 
+// Function to show save changes modal
+function showSaveChangesModal(redirectUrl) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('save-changes-modal');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'save-changes-modal';
+        modal.className = 'modal fade';
+        modal.tabIndex = '-1';
+        modal.setAttribute('aria-labelledby', 'saveChangesModalLabel');
+        modal.setAttribute('aria-hidden', 'true');
+        
+        modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saveChangesModalLabel">Unsaved Changes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You have unsaved changes. What would you like to do?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="discard-changes-btn">Discard Changes</button>
+                    <button type="button" class="btn btn-primary" id="save-and-continue-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    // Initialize modal
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+    
+    // Handle discard changes
+    const discardBtn = document.getElementById('discard-changes-btn');
+    discardBtn.onclick = function() {
+        // Restore original image if available
+        if (originalImageSrc) {
+            const mainImage = document.getElementById('document-image');
+            if (mainImage) {
+                mainImage.src = originalImageSrc;
+            }
+        }
+        hasUnsavedChanges = false;
+        modalInstance.hide();
+        window.location.href = redirectUrl;
+    };
+    
+        // Handle save and continue
+    const saveBtn = document.getElementById('save-and-continue-btn');
+    saveBtn.onclick = function() {
+        // Show loading indicator
+        const loadingIndicator = document.createElement('span');
+        loadingIndicator.className = 'spinner-border spinner-border-sm ms-2';
+        saveBtn.appendChild(loadingIndicator);
+        saveBtn.disabled = true;
+        
+        // Create a promise to track save completion
+        const savePromise = new Promise((resolve) => {
+            // Original image for comparison
+            const originalSrc = mainImageElement.src;
+            
+            // Set up a listener for the alert that appears on successful save
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.addedNodes.length) {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.classList && node.classList.contains('alert-success')) {
+                                resolve();
+                                observer.disconnect();
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // Start observing the document body for added nodes
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            // Call save function
+            saveDocumentChanges();
+            
+            // Fallback timeout after 5 seconds
+            setTimeout(() => {
+                observer.disconnect();
+                resolve();
+            }, 5000);
+        });
+        
+        // Wait for save to complete before redirecting
+        savePromise.then(() => {
+            modalInstance.hide();
+            window.location.href = redirectUrl;
+        });
+    };
+}
+
+function saveDocumentChanges() {
+    if (!mainImageElement || !mainImageElement.src) return;
+
+    // Get the document ID from the URL
+    const urlParts = window.location.pathname.split('/');
+    const documentId = urlParts[urlParts.length - 1];
+    
+    // Create a canvas to get image data
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    
+    img.onload = function() {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert canvas to blob
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('image', blob, 'processed_image.png');
+            
+            // Send to server
+            fetch(`/api/save-document/${documentId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Document saved successfully!', 'success');
+                    hasUnsavedChanges = false;
+                    originalImageSrc = mainImageElement.src;
+                    window.location.reload();
+                } else {
+                    showAlert(data.error || 'Error saving document', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                showAlert('Error saving document. Please try again.', 'danger');
+            });
+        }, 'image/png');
+    };
+    
+    // FIXED: Use mainImageElement instead of mainImage
+    img.src = mainImageElement.src;
+}
+
+
+function sortCorners(corners) {
+    if (!corners || corners.length !== 4) return corners;
+    
+    // Calculate center point
+    const center = {
+        x: corners.reduce((sum, corner) => sum + corner.x, 0) / 4,
+        y: corners.reduce((sum, corner) => sum + corner.y, 0) / 4
+    };
+    
+    // Sort corners based on their angle from center
+    return corners.sort((a, b) => {
+        const angleA = Math.atan2(a.y - center.y, a.x - center.x);
+        const angleB = Math.atan2(b.y - center.y, b.x - center.x);
+        return angleA - angleB;
+    });
+}
+
 async function autoCropDocument() {
-    if (!window.detectedCorners) {
-        showAlert('Please detect edges first', 'warning');
-        return;
+    if (!detectedDocCorners) {
+        detectDocumentEdges();
     }
 
     try {
@@ -336,25 +552,25 @@ async function autoCropDocument() {
         const mainImage = document.getElementById('document-image');
         const img = new Image();
         img.crossOrigin = "Anonymous";
-
+        
         img.onload = () => {
             try {
                 let src = cv.imread(img);
                 let dst = new cv.Mat();
 
                 // Sort corners
-                const corners = sortCorners(window.detectedCorners);
+                const corners = sortCorners(detectedDocCorners);
 
                 // Calculate output dimensions
-                const widthA = Math.sqrt(Math.pow(corners[1].x - corners[0].x, 2) + 
+                const widthA = Math.sqrt(Math.pow(corners[1].x - corners[0].x, 2) +
                                        Math.pow(corners[1].y - corners[0].y, 2));
-                const widthB = Math.sqrt(Math.pow(corners[2].x - corners[3].x, 2) + 
+                const widthB = Math.sqrt(Math.pow(corners[2].x - corners[3].x, 2) +
                                        Math.pow(corners[2].y - corners[3].y, 2));
                 const maxWidth = Math.max(widthA, widthB);
 
-                const heightA = Math.sqrt(Math.pow(corners[3].x - corners[0].x, 2) + 
+                const heightA = Math.sqrt(Math.pow(corners[3].x - corners[0].x, 2) +
                                         Math.pow(corners[3].y - corners[0].y, 2));
-                const heightB = Math.sqrt(Math.pow(corners[2].x - corners[1].x, 2) + 
+                const heightB = Math.sqrt(Math.pow(corners[2].x - corners[1].x, 2) +
                                         Math.pow(corners[2].y - corners[1].y, 2));
                 const maxHeight = Math.max(heightA, heightB);
 
@@ -378,9 +594,9 @@ async function autoCropDocument() {
                 cv.imshow(canvas, dst);
                 mainImage.src = canvas.toDataURL();
                 clearCornerMarkers();
-                window.detectedCorners = null;
 
                 // Cleanup
+                detectedDocCorners = null;
                 src.delete(); dst.delete();
                 srcPointsMat.delete(); dstPointsMat.delete();
                 perspectiveMatrix.delete();
@@ -398,21 +614,6 @@ async function autoCropDocument() {
         showAlert('Error initializing OpenCV', 'danger');
         console.error(error);
     }
-}
-
-function sortCorners(corners) {
-    // Calculate center point
-    const center = {
-        x: corners.reduce((sum, pt) => sum + pt.x, 0) / 4,
-        y: corners.reduce((sum, pt) => sum + pt.y, 0) / 4
-    };
-
-    // Sort corners based on their position relative to center
-    return corners.sort((a, b) => {
-        const angleA = Math.atan2(a.y - center.y, a.x - center.x);
-        const angleB = Math.atan2(b.y - center.y, b.x - center.x);
-        return angleA - angleB;
-    });
 }
 
 function showCropControls(mode = 'manual') {
@@ -1245,29 +1446,6 @@ function applyCropFromModal() {
             cropModalInstance.hide();
         }
     }
-}
-
-
-/**
- * Sets the Cropper.js crop box based on detected corners (their bounding box).
- */
-function setCropperDataFromCorners(corners) {
-    if (!currentModalCropper || !corners || corners.length !== 4) return;
-
-    const xs = corners.map(p => p.x);
-    const ys = corners.map(p => p.y);
-    const minX = Math.min(...xs);
-    const minY = Math.min(...ys);
-    const maxX = Math.max(...xs);
-    const maxY = Math.max(...ys);
-
-    const cropBoxData = {
-        left: minX,
-        top: minY,
-        width: maxX - minX,
-        height: maxY - minY
-    };
-    currentModalCropper.setData(cropBoxData);
 }
 
 /**

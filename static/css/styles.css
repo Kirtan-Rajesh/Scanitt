@@ -285,6 +285,10 @@ footer a:hover {
 .category-sidebar {
   border-right: 1px solid #dee2e6;
 }
+.btn-close{
+  background-color: #ffd6e0;
+  color: #9d174d;
+}
 
 .category-list {
   list-style: none;
@@ -407,3 +411,5 @@ footer a:hover {
 .document-viewer {
   position: relative;
 }
+
+

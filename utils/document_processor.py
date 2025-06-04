@@ -107,17 +107,22 @@ def detect_and_transform(image_path):
         # Make sure points are in the right order (top-left, top-right, bottom-right, bottom-left)
         approx = np.array(approx, dtype=np.float32)
         if len(approx) == 4:
-            # Sum of x+y coordinates - smallest is top-left, largest is bottom-right
-            s = approx.sum(axis=1)
-            rect = np.zeros((4, 2), dtype=np.float32)
-            rect[0] = approx[np.argmin(s)]  # top-left
-            rect[2] = approx[np.argmax(s)]  # bottom-right
-            
-            # Difference of y-x coordinates - smallest is top-right, largest is bottom-left
-            diff = np.diff(approx, axis=1)
-            rect[1] = approx[np.argmin(diff)]  # top-right
-            rect[3] = approx[np.argmax(diff)]  # bottom-left
-            approx = rect
+            try:
+                # Sum of x+y coordinates - smallest is top-left, largest is bottom-right
+                s = approx.sum(axis=1)
+                rect = np.zeros((4, 2), dtype=np.float32)
+                rect[0] = approx[np.argmin(s)]  # top-left
+                rect[2] = approx[np.argmax(s)]  # bottom-right
+                
+                # Difference of y-x coordinates - smallest is top-right, largest is bottom-left
+                diff = np.diff(approx, axis=1)
+                rect[1] = approx[np.argmin(diff)]  # top-right
+                rect[3] = approx[np.argmax(diff)]  # bottom-left
+                approx = rect
+            except IndexError as e:
+                logger.error(f"Index error during corner ordering: {e}")
+                # Fall back to using the original points
+                pass
         
         # Get width and height of the document
         width_top = np.sqrt(((approx[1][0] - approx[0][0]) ** 2) + ((approx[1][1] - approx[0][1]) ** 2))
