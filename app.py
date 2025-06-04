@@ -17,7 +17,7 @@ import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scanitt.db'  # Use PostgreSQL in production
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')  # Use PostgreSQL in production
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 app.config['PROCESSED_FOLDER'] = os.path.join('static', 'processed')
